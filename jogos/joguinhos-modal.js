@@ -77,6 +77,18 @@
             fechar: function () {
                 if (window.TamanduaGame) window.TamanduaGame.fechar();
             }
+        },
+        {
+            id: 'sonic',
+            nome: 'Sonic',
+            icon: 'speed',
+            cor: 'linear-gradient(135deg,#1d4ed8,#38bdf8)',
+            abrir: function () {
+                if (window.SonicGame) window.SonicGame.abrir();
+            },
+            fechar: function () {
+                if (window.SonicGame) window.SonicGame.fechar();
+            }
         }
     ];
 
@@ -209,7 +221,7 @@
         jogoAtual = jogo;
         mostrarTela('tela-jogo');
         // Jogos com overlay proprio (fullscreen) escondem a tela-jogo
-        if (jogo.id === 'escorpiao' || jogo.id === 'reptil' || jogo.id === 'pacman' || jogo.id === 'tamandua') {
+        if (jogo.id === 'escorpiao' || jogo.id === 'reptil' || jogo.id === 'pacman' || jogo.id === 'tamandua' || jogo.id === 'sonic') {
             document.getElementById('tela-jogo').classList.add('hidden');
         }
         jogo.abrir();
@@ -248,17 +260,6 @@
             grid.appendChild(card);
         });
 
-        // Card "em breve" placeholders
-        for (var i = 0; i < 1; i++) {
-            var placeholder = document.createElement('div');
-            placeholder.className = 'hub-card locked';
-            placeholder.innerHTML =
-                '<div class="hub-card-icon" style="background:rgba(255,255,255,0.05);">' +
-                    '<span class="material-icons" style="color:rgba(255,255,255,0.2);">lock</span>' +
-                '</div>' +
-                '<div class="hub-card-name" style="color:rgba(255,255,255,0.2);">Em breve</div>';
-            grid.appendChild(placeholder);
-        }
     }
 
     // ---- Splash: Desenhar rosto do Jose (estilo referencia) ----
