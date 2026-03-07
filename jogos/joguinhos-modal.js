@@ -627,18 +627,22 @@
         // Iniciar animacoes do splash
         iniciarSplashAnim();
 
-        // Musica: resume AudioContext na primeira interacao com a splash
+        // Musica: resume AudioContext na primeira interacao do usuario
         // (necessario para mobile onde AC começa suspenso)
-        var splashEl = document.getElementById('tela-splash');
-        if (splashEl) {
-            splashEl.addEventListener('pointerdown', function () {
-                if (_splashAC && _splashAC.state === 'suspended' && _splashMusicActive) {
-                    _splashAC.resume().then(function () {
-                        if (_splashMusicActive && !_splashNoteTimer) _agendarNota(0);
-                    });
-                }
-            });
+        var primeiraInteracao = false;
+        function tentarIniciarMusica() {
+            if (primeiraInteracao) return;
+            if (_splashAC && _splashAC.state === 'suspended' && _splashMusicActive) {
+                primeiraInteracao = true;
+                _splashAC.resume().then(function () {
+                    if (_splashMusicActive && !_splashNoteTimer) _agendarNota(0);
+                });
+            }
         }
+        // Capturar qualquer interacao no documento
+        ['click', 'touchstart', 'keydown'].forEach(function (evt) {
+            document.addEventListener(evt, tentarIniciarMusica, { once: false, passive: true });
+        });
     }
 
     // Exposicao global (retrocompatibilidade)
