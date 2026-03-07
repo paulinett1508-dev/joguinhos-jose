@@ -1,22 +1,44 @@
 # JOGUINHOS - PROJECT RULES
 
+## Publico-Alvo
+
+Criancas pequenas (~2-5 anos), muitas ainda nao sabem ler.
+
+- Texto pode existir, mas **curto e simples** (1-3 palavras por elemento)
+- **Nunca verboso** — frases longas ou instrucoes complexas
+- Priorizar comunicacao visual: icones, cores, formas, animacoes
+
 ## Tech Stack
 - **Runtime:** Browser (Vanilla JS, zero dependencias)
 - **Rendering:** Canvas 2D API
 - **Styling:** Inline styles + Google Fonts (Russo One, Inter, JetBrains Mono)
 - **Icons:** Material Icons (via CDN)
+- **Audio:** Web Audio API (sons gerados programaticamente, zero arquivos)
+- **Deploy:** Vercel (site estatico, sem build step)
+
+## Deploy (Vercel)
+
+- Site 100% estatico — sem servidor, sem build step
+- `index.html` na raiz do projeto
+- Framework preset: "Other" no Vercel
+- Output directory: `.` (raiz)
+- Config em `vercel.json` (headers de cache para assets)
+- Cada push no GitHub = deploy automatico
 
 ## Arquitetura
 
 ### Estrutura de Arquivos
 ```
+index.html              # Pagina principal
+vercel.json             # Config Vercel
 jogos/
-  index.html          # Pagina demo
-  penaltis.js         # Jogo de Penaltis (standalone)
-  escorpiao.js        # Jogo Escorpiao (standalone)
-  joguinhos-modal.js  # Modal de selecao (orquestra os jogos)
+  penaltis.js           # Jogo de Penaltis (standalone)
+  escorpiao.js          # Jogo Escorpiao (standalone)
+  joguinhos-modal.js    # Modal de selecao (orquestra os jogos)
+assets/
+  sons/                 # Futuros arquivos de audio (se necessario)
 docs/
-  ORIGEM.md           # Referencia do codigo original
+  ORIGEM.md             # Referencia do codigo original
 ```
 
 ### Padrao de Cada Jogo
@@ -51,6 +73,23 @@ abrirJoguinhos() → Modal de selecao
 - **Responsivo:** Suporte a mouse + touch
 - **Acessibilidade:** Suporte a teclado (atalhos)
 
+### Design para Criancas
+- **Alvos de toque grandes** — Minimo 64x64px, ideal 80px+
+- **Espacamento generoso** — Minimo 20px entre elementos clicaveis
+- **Interacao simples** — Tap/clique basico. Evitar drag, pinch, swipe, gestos complexos
+- **Sem feedback negativo** — NUNCA "voce perdeu", "errou", insultos. Toda interacao = resposta positiva
+- **Sessoes curtas** — 2-3 minutos por rodada no maximo
+- **Texto curto** — Ok ter texto, mas 1-3 palavras. Nunca frases longas
+- **Feedback imediato** — Todo toque deve produzir som + animacao visual
+- **Cores vibrantes** — Alto contraste, cores alegres
+
+### Audio (Web Audio API)
+- Sons gerados **programaticamente** via `AudioContext` + `OscillatorNode`
+- Zero dependencia de arquivos de audio externos
+- Todo jogo deve ter feedback sonoro em interacoes (clique, acerto, erro, fim)
+- **Cleanup obrigatorio** — fechar/suspender `AudioContext` ao fechar jogo
+- Padrao: criar helper de som dentro de cada IIFE, nao como global
+
 ### Canvas
 - **requestAnimationFrame** para game loops
 - **Cleanup obrigatorio** — cancelAnimationFrame + removeEventListener ao fechar
@@ -61,7 +100,7 @@ Ao adicionar um novo jogo:
 1. Criar `jogos/nome-do-jogo.js` seguindo o padrao IIFE
 2. Expor `window.NomeDoJogoGame` com `abrir()` e `fechar()`
 3. Adicionar botao no modal (`joguinhos-modal.js`)
-4. Incluir `<script>` na `index.html`
+4. Incluir `<script src="jogos/...">` na `index.html` (raiz)
 5. Atualizar `README.md` com descricao do jogo
 6. Documentar origem em `docs/ORIGEM.md` se aplicavel
 

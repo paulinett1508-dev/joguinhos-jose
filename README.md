@@ -1,6 +1,6 @@
 # Joguinhos
 
-Mini-games extraidos do [Super Cartola Manager](https://github.com/paulinett1508-dev/SuperCartolaManagerv5).
+Mini-games para criancas, extraidos do [Super Cartola Manager](https://github.com/paulinett1508-dev/SuperCartolaManagerv5). Deploy via Vercel.
 
 ## Jogos Disponiveis
 
@@ -22,7 +22,7 @@ Canvas interativo fullscreen onde um escorpiao segue o mouse.
 ## Como Usar
 
 ### Demo rapida
-Abra `jogos/index.html` no navegador.
+Abra `index.html` no navegador (ou acesse via Vercel).
 
 ### Integracao em projeto
 ```html
@@ -54,13 +54,16 @@ window.EscorpiaoGame.fechar();
 ## Estrutura
 
 ```
+index.html              # Pagina principal
+vercel.json             # Config Vercel (headers/cache)
 jogos/
-  index.html          # Pagina demo
-  penaltis.js         # Jogo de Penaltis standalone
-  escorpiao.js        # Jogo Escorpiao standalone
-  joguinhos-modal.js  # Modal de selecao de jogos
+  penaltis.js           # Jogo de Penaltis standalone
+  escorpiao.js          # Jogo Escorpiao standalone
+  joguinhos-modal.js    # Modal de selecao de jogos
+assets/
+  sons/                 # Futuros arquivos de audio
 docs/
-  ORIGEM.md           # Referencia de onde cada codigo veio
+  ORIGEM.md             # Referencia de onde cada codigo veio
 ```
 
 ## Origem
@@ -75,5 +78,7 @@ Detalhes completos em [`docs/ORIGEM.md`](docs/ORIGEM.md).
 
 - Vanilla JS (zero dependencias)
 - Canvas 2D API
+- Web Audio API (sons programaticos)
 - Material Icons (via CDN)
 - Google Fonts: Russo One, Inter, JetBrains Mono
+- Deploy: Vercel (site estatico)
