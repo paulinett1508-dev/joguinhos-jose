@@ -702,9 +702,9 @@
         var dh = H * 0.58;
         var dw = iw * (dh / ih);
 
-        // Grama do fundo.png está em ~57% da imagem (285/498)
+        // Grama do fundo.png está em ~77% da imagem (385/498)
         // Posicionar para que essa linha coincida com GY
-        var GRASS_FRAC = 285 / 498;
+        var GRASS_FRAC = 385 / 498;
         var bgY = GY - dh * GRASS_FRAC;
 
         // Céu sólido acima da imagem (cor do GHZ: azul escuro)
