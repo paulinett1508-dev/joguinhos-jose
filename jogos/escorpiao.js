@@ -1,5 +1,5 @@
 // =====================================================================
-// escorpiao.js — Jogo Escorpiao Standalone v3.0
+// escorpiao.js — Jogo Escorpiao Standalone v3.1
 // =====================================================================
 // 3 fases fechadas com condicoes de vitoria e derrota
 // Maca (+10pts, cresce) | Brocolis (-5pts, encolhe)
@@ -62,6 +62,8 @@
         missedApples: 0,
         particulas:   [],
         ac:           null,
+        ambientNode:  null,
+        ambientGain:  null,
         _bloqueado:   false,
 
         _getFase() {
@@ -234,6 +236,7 @@
             if (this.animFrame) { cancelAnimationFrame(this.animFrame); this.animFrame = null; }
             if (this._onKey)    { document.removeEventListener('keydown', this._onKey); this._onKey = null; }
             if (this._onResize) { window.removeEventListener('resize', this._onResize); this._onResize = null; }
+            this._pararAmbiente();
             if (this.ac)        { this.ac.close(); this.ac = null; }
             const overlay = document.getElementById('escorpiao-overlay');
             if (overlay) overlay.remove();
@@ -602,6 +605,60 @@
                 try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
             }
             if (this.ac && this.ac.state === 'suspended') this.ac.resume();
+            // Iniciar som ambiente se ainda nao iniciou
+            if (this.ac && !this.ambientNode) {
+                this._iniciarAmbiente();
+            }
+        },
+
+        _iniciarAmbiente() {
+            if (!this.ac || this.ambientNode) return;
+            const ac = this.ac;
+
+            // Criar ruido de vento do deserto (ruido rosa filtrado)
+            const bufferSize = ac.sampleRate * 2;
+            const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+            const data = buffer.getChannelData(0);
+
+            // Ruido rosa suave
+            let b0 = 0, b1 = 0, b2 = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                b0 = 0.99765 * b0 + white * 0.0990460;
+                b1 = 0.96300 * b1 + white * 0.2965164;
+                b2 = 0.57000 * b2 + white * 1.0526913;
+                data[i] = (b0 + b1 + b2) * 0.06;
+            }
+
+            const source = ac.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+
+            // Filtro passa-baixa para som de vento suave
+            const filter = ac.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 400;
+            filter.Q.value = 0.5;
+
+            // Ganho baixo para nao atrapalhar
+            const gain = ac.createGain();
+            gain.gain.value = 0.08;
+
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(ac.destination);
+            source.start();
+
+            this.ambientNode = source;
+            this.ambientGain = gain;
+        },
+
+        _pararAmbiente() {
+            if (this.ambientNode) {
+                try { this.ambientNode.stop(); } catch (e) {}
+                this.ambientNode = null;
+            }
+            this.ambientGain = null;
         },
 
         // ---- DOM helpers ----

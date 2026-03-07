@@ -1,5 +1,5 @@
 // =====================================================================
-// pacman.js — Jogo Pac-Man Standalone v1.2
+// pacman.js — Jogo Pac-Man Standalone v1.3
 // =====================================================================
 // Pac-Man simplificado para criancas
 // Controles: toque/mouse para direcionar, ESC para sair
@@ -51,6 +51,8 @@
     // ---- Sistema de Som ----
     function SomPacman() {
         this.audioCtx = null;
+        this.ambientOsc = null;
+        this.ambientGain = null;
     }
 
     SomPacman.prototype.init = function () {
@@ -59,6 +61,44 @@
         } catch (e) {
             this.audioCtx = null;
         }
+    };
+
+    SomPacman.prototype.iniciarAmbiente = function () {
+        if (!this.audioCtx || this.ambientOsc) return;
+        var ctx = this.audioCtx;
+        if (ctx.state === 'suspended') ctx.resume();
+
+        // Som ambiente arcade: hum grave suave
+        var osc1 = ctx.createOscillator();
+        var osc2 = ctx.createOscillator();
+        var gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.value = 55; // Nota grave
+        osc2.type = 'sine';
+        osc2.frequency.value = 110; // Oitava acima
+
+        gain.gain.value = 0.04; // Bem baixinho
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start();
+        osc2.start();
+
+        this.ambientOsc = [osc1, osc2];
+        this.ambientGain = gain;
+    };
+
+    SomPacman.prototype.pararAmbiente = function () {
+        if (this.ambientOsc) {
+            for (var i = 0; i < this.ambientOsc.length; i++) {
+                try { this.ambientOsc[i].stop(); } catch (e) {}
+            }
+            this.ambientOsc = null;
+        }
+        this.ambientGain = null;
     };
 
     SomPacman.prototype._tocar = function (freq, dur, type, vol) {
@@ -150,6 +190,7 @@
     };
 
     SomPacman.prototype.fechar = function () {
+        this.pararAmbiente();
         if (this.audioCtx) {
             this.audioCtx.close().catch(function () {});
             this.audioCtx = null;
@@ -322,6 +363,11 @@
 
             // Controles - direcao baseada em toque/mouse
             function updateDirection(clientX, clientY) {
+                // Iniciar som ambiente na primeira interacao
+                if (self.som && !self.som.ambientOsc) {
+                    self.som.iniciarAmbiente();
+                }
+
                 var px = self.offsetX + self.pacman.x;
                 var py = self.offsetY + self.pacman.y;
                 var dx = clientX - px;
