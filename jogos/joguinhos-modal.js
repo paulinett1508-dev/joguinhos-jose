@@ -43,26 +43,14 @@
             }
         },
         {
-            id: 'lagarto',
-            nome: 'Lagarto',
-            icon: 'gesture',
-            cor: 'linear-gradient(135deg,#10b981,#047857)',
-            abrir: function () {
-                if (window.ReptilGame) window.ReptilGame.abrir('lagarto');
-            },
-            fechar: function () {
-                if (window.ReptilGame) window.ReptilGame.fechar();
-            }
-        },
-        {
-            id: 'lacraia',
-            nome: 'Lacraia',
+            id: 'reptil',
+            nome: 'Reptil',
             icon: 'pest_control_rodent',
-            cor: 'linear-gradient(135deg,#f97316,#c2410c)',
-            abrir: function () {
-                if (window.ReptilGame) window.ReptilGame.abrir('lacraia');
-            },
+            cor: 'linear-gradient(135deg,#10b981,#f97316)',
+            abrir: function () { mostrarPickerReptil(); },
             fechar: function () {
+                var p = document.getElementById('reptil-picker');
+                if (p) p.remove();
                 if (window.ReptilGame) window.ReptilGame.fechar();
             }
         },
@@ -221,7 +209,7 @@
         jogoAtual = jogo;
         mostrarTela('tela-jogo');
         // Jogos com overlay proprio (fullscreen) escondem a tela-jogo
-        if (jogo.id === 'escorpiao' || jogo.id === 'lagarto' || jogo.id === 'lacraia' || jogo.id === 'pacman' || jogo.id === 'tamandua') {
+        if (jogo.id === 'escorpiao' || jogo.id === 'reptil' || jogo.id === 'pacman' || jogo.id === 'tamandua') {
             document.getElementById('tela-jogo').classList.add('hidden');
         }
         jogo.abrir();
@@ -592,6 +580,71 @@
             splashAnimFrame = requestAnimationFrame(frame);
         }
         frame();
+    }
+
+    // ---- Picker de sub-tipo do Reptil ----
+
+    function mostrarPickerReptil() {
+        var picker = document.createElement('div');
+        picker.id = 'reptil-picker';
+        picker.style.cssText = [
+            'position:fixed', 'inset:0', 'z-index:9998',
+            'background:rgba(5,10,20,0.96)',
+            'display:flex', 'flex-direction:column',
+            'align-items:center', 'justify-content:center', 'gap:20px',
+        ].join(';');
+
+        var titulo = document.createElement('div');
+        titulo.style.cssText = [
+            'font-family:"Russo One",sans-serif',
+            'font-size:clamp(1.2rem,5vw,1.8rem)',
+            'color:#f1f5f9', 'margin-bottom:8px', 'text-align:center',
+        ].join(';');
+        titulo.textContent = 'Qual reptil?';
+        picker.appendChild(titulo);
+
+        var opcoes = [
+            { tipo: 'lagarto', nome: 'Lagarto', icon: 'gesture',            cor: 'linear-gradient(135deg,#10b981,#047857)' },
+            { tipo: 'lacraia', nome: 'Lacraia', icon: 'pest_control_rodent', cor: 'linear-gradient(135deg,#f97316,#c2410c)' },
+        ];
+
+        opcoes.forEach(function (opt) {
+            var btn = document.createElement('button');
+            btn.style.cssText = [
+                'width:min(260px,78vw)', 'min-height:80px',
+                'background:' + opt.cor,
+                'border:none', 'border-radius:22px',
+                'font-family:"Russo One",sans-serif',
+                'font-size:clamp(1.1rem,4.5vw,1.4rem)',
+                'color:#fff', 'cursor:pointer',
+                'display:flex', 'align-items:center', 'justify-content:center', 'gap:14px',
+                'box-shadow:0 6px 24px rgba(0,0,0,0.5)',
+                '-webkit-tap-highlight-color:transparent',
+                'transition:transform 0.12s',
+            ].join(';');
+            btn.innerHTML = '<span class="material-icons" style="font-size:30px;">' + opt.icon + '</span>' + opt.nome;
+            btn.addEventListener('click', function () {
+                picker.remove();
+                if (window.ReptilGame) window.ReptilGame.abrir(opt.tipo);
+            });
+            picker.appendChild(btn);
+        });
+
+        var btnVoltar = document.createElement('button');
+        btnVoltar.style.cssText = [
+            'margin-top:8px', 'background:transparent',
+            'border:1px solid #334155', 'color:#64748b',
+            'border-radius:12px', 'padding:12px 28px',
+            'font-family:Inter,sans-serif', 'font-size:0.9rem', 'cursor:pointer',
+        ].join(';');
+        btnVoltar.textContent = 'Voltar';
+        btnVoltar.addEventListener('click', function () {
+            picker.remove();
+            voltarDoJogo();
+        });
+        picker.appendChild(btnVoltar);
+
+        document.body.appendChild(picker);
     }
 
     function iniciarSplashAnim() {

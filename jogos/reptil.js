@@ -37,12 +37,13 @@
         BODY_STROKE:  '#00ff88',
         BODY_FILL:    '#050a14',
         BODY_FILL2:   '#0a1628',
-        LEG_STROKE:   'rgba(0,255,136,0.6)',
+        TAIL_FILL:    '#021a0c',
+        LEG_STROKE:   'rgba(0,255,136,0.55)',
         GLOW:         'rgba(0,255,136,0.5)',
         EYE:          '#0f172a',
         ANT:          '#00ff88',
-        HEAD_R:       4,
-        LINE_W:       2.2,
+        HEAD_R:       6,
+        LINE_W:       2.0,
         STROKE:       '#00ff88',
         STROKE_DIM:   'rgba(0,255,136,0.35)',
         EYE_GLOW:     '#00ff88',
@@ -119,6 +120,24 @@
             ctx.beginPath();
             ctx.moveTo(-len * 0.38, 0);
             ctx.lineTo(len * 0.38, 0);
+            ctx.stroke();
+            ctx.restore();
+        } else if (this.segType === 'tail') {
+            var dx = this.x - this.parent.x;
+            var dy = this.y - this.parent.y;
+            var angle = Math.atan2(dy, dx);
+            var len = Math.sqrt(dx * dx + dy * dy);
+            var cx = (this.x + this.parent.x) / 2;
+            var cy = (this.y + this.parent.y) / 2;
+            var tw = this.tailW || 2;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, len * 0.52, tw, 0, 0, Math.PI * 2);
+            ctx.fillStyle = CONF.TAIL_FILL || CONF.BODY_FILL;
+            ctx.fill();
             ctx.stroke();
             ctx.restore();
         } else if (this.segType === 'leg') {
@@ -535,15 +554,15 @@
     function buildLizard(cx, cy, sizeScale, legCount, tailLen) {
         var s = sizeScale;
         var critter = new Creature(cx, cy, 0,
-            s * 8, s * 1.5, 0.3, 12, 0.4, 0.06, 0.4, 0.2);
+            s * 7, s * 1.4, 0.28, 10, 0.38, 0.055, 0.38, 0.18);
 
         var spinal = critter;
 
-        // Pescoco (4 segmentos com costelas - mais rigido)
+        // Pescoco (4 segmentos)
         for (var i = 0; i < 4; i++) {
-            spinal = new Segment(spinal, s * 4, 0, Math.PI / 4, 2.5);
+            spinal = new Segment(spinal, s * 4.5, 0, Math.PI / 4, 2.5);
             for (var side = -1; side <= 1; side += 2) {
-                var node = new Segment(spinal, s * 3, side, 0.1, 2);
+                var node = new Segment(spinal, s * 3.5, side, 0.1, 2);
                 for (var k = 0; k < 3; k++) {
                     node = new Segment(node, s * 0.1, -side * 0.1, 0.1, 2);
                 }
@@ -553,11 +572,10 @@
         // Torso + pernas
         for (var i = 0; i < legCount; i++) {
             if (i > 0) {
-                // Vertebras entre pernas (menos e mais rigidas)
                 for (var ii = 0; ii < 4; ii++) {
-                    spinal = new Segment(spinal, s * 4, 0, Math.PI / 4, 2.5);
+                    spinal = new Segment(spinal, s * 4.5, 0, Math.PI / 4, 2.5);
                     for (var side = -1; side <= 1; side += 2) {
-                        var node = new Segment(spinal, s * 3, side * Math.PI / 2, 0.1, 1.5);
+                        var node = new Segment(spinal, s * 3.5, side * Math.PI / 2, 0.1, 1.5);
                         for (var k = 0; k < 3; k++) {
                             node = new Segment(node, s * 3, -side * 0.3, 0.1, 2);
                         }
@@ -565,32 +583,24 @@
                 }
             }
 
-            // Pernas (ombro/quadril + humero + antebraco + dedos)
+            // Pernas (quadril + humero + antebraco + dedos)
             for (var side = -1; side <= 1; side += 2) {
-                var hip = new Segment(spinal, s * 12, side * 0.785, 0, 8);
-                var humerus = new Segment(hip, s * 16, -side * 0.785, Math.PI * 2, 1);
-                var forearm = new Segment(humerus, s * 16, side * Math.PI / 2, Math.PI, 2);
-
-                // Dedos
+                var hip = new Segment(spinal, s * 13, side * 0.785, 0, 8);
+                var humerus = new Segment(hip, s * 17, -side * 0.785, Math.PI * 2, 1);
+                var forearm = new Segment(humerus, s * 17, side * Math.PI / 2, Math.PI, 2);
                 for (var f = 0; f < 4; f++) {
-                    new Segment(forearm, s * 4, (f / 3 - 0.5) * Math.PI / 2, 0.1, 4);
+                    new Segment(forearm, s * 5, (f / 3 - 0.5) * Math.PI / 2, 0.1, 4);
                 }
-
-                new LegSystem(forearm, 3, s * 12, critter);
+                new LegSystem(forearm, 3, s * 13, critter);
             }
         }
 
-        // Cauda (flexivel e elegante, movimento suave)
+        // Cauda estilizada: elipses afiladas sem galhos laterais
         for (var i = 0; i < tailLen; i++) {
-            // Rigidez aumenta gradualmente na ponta para evitar chicotear
-            var tailStiff = 1.3 + (i / tailLen) * 0.5;
-            spinal = new Segment(spinal, s * 3.5, 0, Math.PI / 2.5, tailStiff);
-            for (var side = -1; side <= 1; side += 2) {
-                var node = new Segment(spinal, s * 3, side, 0.1, 2);
-                for (var k = 0; k < 3; k++) {
-                    node = new Segment(node, s * 3 * (tailLen - i) / tailLen, -side * 0.1, 0.1, 2);
-                }
-            }
+            var tailStiff = 1.2 + (i / tailLen) * 0.9;
+            spinal = new Segment(spinal, s * 4.8, 0, Math.PI / 2.2, tailStiff);
+            spinal.segType = 'tail';
+            spinal.tailW = Math.max(1.2, 9 - (i / tailLen) * 8.2);
         }
 
         critter.isLizard = true;
@@ -696,9 +706,8 @@
             if (self._tipo === 'lagarto') {
                 CONF = CONF_LAGARTO;
                 var legCount = _low() ? 2 : 2 + Math.floor(Math.random() * 2);
-                var sizeScale = 4 / Math.sqrt(legCount);
-                var tailLen = _low() ? 8 : 10 + Math.floor(Math.random() * 6);
-                self.critter = buildLizard(W / 2, H / 2, sizeScale, legCount, tailLen);
+                var tailLen = _low() ? 12 : 16 + Math.floor(Math.random() * 4);
+                self.critter = buildLizard(W / 2, H / 2, 4.5, legCount, tailLen);
             } else {
                 CONF = CONF_LACRAIA;
                 self.critter = buildCentipede(W / 2, H / 2);
