@@ -640,9 +640,9 @@
             filter.frequency.value = 400;
             filter.Q.value = 0.5;
 
-            // Ganho baixo para nao atrapalhar
+            // Ganho do som ambiente
             const gain = ac.createGain();
-            gain.gain.value = 0.08;
+            gain.gain.value = 0.25;
 
             source.connect(filter);
             filter.connect(gain);
