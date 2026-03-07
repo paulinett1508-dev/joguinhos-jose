@@ -41,6 +41,18 @@
             fechar: function () {
                 if (window.EscorpiaoGame) window.EscorpiaoGame.fechar();
             }
+        },
+        {
+            id: 'reptil',
+            nome: 'Reptil',
+            icon: 'cruelty_free',
+            cor: 'linear-gradient(135deg,#10b981,#047857)',
+            abrir: function () {
+                if (window.ReptilGame) window.ReptilGame.abrir();
+            },
+            fechar: function () {
+                if (window.ReptilGame) window.ReptilGame.fechar();
+            }
         }
     ];
 
@@ -77,8 +89,8 @@
     function irParaJogo(jogo) {
         jogoAtual = jogo;
         mostrarTela('tela-jogo');
-        // Escorpiao cria seu proprio overlay, entao esconde a tela-jogo
-        if (jogo.id === 'escorpiao') {
+        // Jogos com overlay proprio (fullscreen) escondem a tela-jogo
+        if (jogo.id === 'escorpiao' || jogo.id === 'reptil') {
             document.getElementById('tela-jogo').classList.add('hidden');
         }
         jogo.abrir();
@@ -118,7 +130,7 @@
         });
 
         // Card "em breve" placeholders
-        for (var i = 0; i < 2; i++) {
+        for (var i = 0; i < 1; i++) {
             var placeholder = document.createElement('div');
             placeholder.className = 'hub-card locked';
             placeholder.innerHTML =

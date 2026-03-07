@@ -34,6 +34,7 @@ vercel.json             # Config Vercel
 jogos/
   penaltis.js           # Jogo de Penaltis (standalone)
   escorpiao.js          # Jogo Escorpiao (standalone)
+  reptil.js             # Jogo Reptil (standalone, IK procedural)
   joguinhos-modal.js    # Sistema de navegacao (splash → hub → jogo)
 assets/
   sons/                 # Futuros arquivos de audio (se necessario)
@@ -46,6 +47,7 @@ docs/
 Cada jogo e um IIFE que expoe um objeto global:
 - `window.PenaltisGame` — com metodos `abrir(container)` e `fechar()`
 - `window.EscorpiaoGame` — com metodos `abrir()` e `fechar()`
+- `window.ReptilGame` — com metodos `abrir()` e `fechar()`
 
 ### Sistema de Telas (joguinhos-modal.js)
 ```
@@ -151,6 +153,16 @@ Consultar antes de implementar:
 - Fisica: LERP na cabeca, chain following nos segmentos
 - Efeitos: patas animadas, ferrao glow, olhos, garras
 - Controles: mouse/touch, ESC para sair
+
+### Reptil (`reptil.js`)
+- Canvas fullscreen, lagarto procedural
+- Inverse Kinematics esqueletica (Segment → LimbSystem → LegSystem → Creature)
+- Pernas com auto-stepping procedural (2-5 pares, aleatorio)
+- Cauda variavel proporcional ao corpo
+- Fisica: aceleracao/friccao/resistencia (forward + rotational)
+- Visual: wireframe neon verde com glow
+- Controles: mouse/touch, ESC para sair
+- Inspirado em Reptile Interactive Cursor (MIT License)
 
 ## Ideias para Novos Jogos
 - Snake (tema futebol)

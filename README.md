@@ -19,6 +19,16 @@ Canvas interativo fullscreen onde um escorpiao segue o mouse.
 - **Controles:** Mouse/touch para guiar, ESC para sair
 - **Efeitos:** Patas animadas, ferrao com glow, olhos com reflexo, garras articuladas
 
+### Reptil
+Lagarto procedural com inverse kinematics — pernas que caminham de verdade.
+
+- **Fisica:** IK esqueletica com hierarquia pai-filho de segmentos
+- **Pernas:** Auto-stepping procedural (2-5 pares, aleatorio a cada sessao)
+- **Cauda:** Comprimento variavel proporcional ao corpo
+- **Visual:** Neon verde wireframe com glow sobre fundo escuro
+- **Controles:** Mouse/touch para guiar, ESC para sair
+- **Inspirado em:** [Reptile Interactive Cursor](https://github.com/Lokesh-reddy18/Reptile-Cursor) (MIT)
+
 ## Como Usar
 
 ### Demo rapida
@@ -33,6 +43,7 @@ Abra `index.html` no navegador (ou acesse via Vercel).
 <!-- Scripts dos jogos -->
 <script src="jogos/penaltis.js"></script>
 <script src="jogos/escorpiao.js"></script>
+<script src="jogos/reptil.js"></script>
 <script src="jogos/joguinhos-modal.js"></script>
 ```
 
@@ -49,6 +60,10 @@ window.PenaltisGame.fechar();
 // Escorpiao direto (fullscreen)
 window.EscorpiaoGame.abrir();
 window.EscorpiaoGame.fechar();
+
+// Reptil direto (fullscreen)
+window.ReptilGame.abrir();
+window.ReptilGame.fechar();
 ```
 
 ## Estrutura
@@ -59,6 +74,7 @@ vercel.json             # Config Vercel (headers/cache)
 jogos/
   penaltis.js           # Jogo de Penaltis standalone
   escorpiao.js          # Jogo Escorpiao standalone
+  reptil.js             # Jogo Reptil standalone (IK procedural)
   joguinhos-modal.js    # Modal de selecao de jogos
 assets/
   sons/                 # Futuros arquivos de audio
