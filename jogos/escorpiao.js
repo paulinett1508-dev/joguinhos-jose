@@ -104,7 +104,7 @@
                 closeBtn.style.color = '#475569';
                 closeBtn.style.borderColor = '#1e3a5f';
             });
-            closeBtn.addEventListener('click', () => EscorpiaoGame.fechar());
+            closeBtn.addEventListener('click', () => window.fecharJoguinhos ? window.fecharJoguinhos() : EscorpiaoGame.fechar());
 
             // Label instrucao
             const label = document.createElement('div');
@@ -143,7 +143,7 @@
             }, { passive: false });
 
             // ESC fecha
-            this._onKey = (e) => { if (e.key === 'Escape') EscorpiaoGame.fechar(); };
+            this._onKey = (e) => { if (e.key === 'Escape') (window.fecharJoguinhos ? window.fecharJoguinhos() : EscorpiaoGame.fechar()); };
             document.addEventListener('keydown', this._onKey);
 
             // Redimensionamento

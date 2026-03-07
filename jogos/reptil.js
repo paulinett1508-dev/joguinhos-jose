@@ -447,7 +447,7 @@
                 closeBtn.style.color = '#475569';
                 closeBtn.style.borderColor = '#1e3a5f';
             });
-            closeBtn.addEventListener('click', function () { self.fechar(); });
+            closeBtn.addEventListener('click', function () { window.fecharJoguinhos ? window.fecharJoguinhos() : self.fechar(); });
 
             // Label instrucao
             var label = document.createElement('div');
@@ -494,7 +494,7 @@
 
             // ESC fecha
             self._onKey = function (e) {
-                if (e.key === 'Escape') self.fechar();
+                if (e.key === 'Escape') (window.fecharJoguinhos ? window.fecharJoguinhos() : self.fechar());
             };
             document.addEventListener('keydown', self._onKey);
 
