@@ -274,9 +274,9 @@
         // Paleta de cores
         var skin = '#f5dfc5';
         var skinDark = '#e8c9a8';
-        var hairColor = '#1a1a1a';
-        var hairLight = '#3a3a3a';
-        var hairDark = '#0a0a0a';
+        var hairColor = '#1a3f7a';
+        var hairLight = '#2d5fa8';
+        var hairDark = '#0f2a55';
 
         function frame() {
             t++;
@@ -474,25 +474,26 @@
         var ctx = canvas.getContext('2d');
         var t = 0;
 
-        // Particulas geometricas (reduzidas em low-end)
-        var particulas = [];
-        var shapes = ['circle', 'triangle', 'square', 'diamond', 'star'];
-        var numPart = (_P().splashParticles) || 35;
-        for (var i = 0; i < numPart; i++) {
-            particulas.push({
-                x: Math.random() * W,
-                y: Math.random() * H,
-                size: 4 + Math.random() * 12,
-                speedY: 0.3 + Math.random() * 0.8,
-                speedX: (Math.random() - 0.5) * 0.5,
-                rotation: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 0.03,
-                phase: Math.random() * Math.PI * 2,
-                shape: shapes[Math.floor(Math.random() * shapes.length)],
-                color: ['#818cf8', '#34d399', '#fbbf24', '#f472b6', '#38bdf8', '#a855f7', '#22d3ee'][Math.floor(Math.random() * 7)],
-                opacity: 0.15 + Math.random() * 0.35
-            });
-        }
+        // Formas decorativas fixas (estilo Stitch design)
+        var FORMAS_FIXAS = [
+            // Estrelas
+            { x: 0.08, y: 0.82, size: 18, shape: 'star',     color: '#fbbf24', phase: 0.0 },
+            { x: 0.92, y: 0.72, size: 16, shape: 'star',     color: '#38bdf8', phase: 1.2 },
+            { x: 0.18, y: 0.12, size: 14, shape: 'star',     color: '#f472b6', phase: 2.4 },
+            { x: 0.82, y: 0.18, size: 15, shape: 'star',     color: '#a855f7', phase: 0.8 },
+            // Triangulos
+            { x: 0.06, y: 0.35, size: 14, shape: 'triangle', color: '#34d399', phase: 1.6 },
+            { x: 0.94, y: 0.42, size: 13, shape: 'triangle', color: '#fbbf24', phase: 0.4 },
+            { x: 0.25, y: 0.88, size: 12, shape: 'triangle', color: '#38bdf8', phase: 2.0 },
+            { x: 0.75, y: 0.85, size: 13, shape: 'triangle', color: '#f472b6', phase: 1.0 },
+            // Circulos
+            { x: 0.88, y: 0.55, size: 10, shape: 'circle',   color: '#fbbf24', phase: 1.8 },
+            { x: 0.12, y: 0.58, size: 11, shape: 'circle',   color: '#22d3ee', phase: 0.6 },
+            { x: 0.55, y: 0.90, size: 9,  shape: 'circle',   color: '#a855f7', phase: 2.2 },
+            { x: 0.45, y: 0.06, size: 10, shape: 'circle',   color: '#34d399', phase: 1.4 },
+            { x: 0.78, y: 0.06, size: 8,  shape: 'circle',   color: '#fbbf24', phase: 0.2 },
+            { x: 0.22, y: 0.06, size: 8,  shape: 'circle',   color: '#38bdf8', phase: 1.9 },
+        ];
 
         // Funcao para desenhar formas
         function drawShape(x, y, size, shape, rotation) {
@@ -540,125 +541,42 @@
             t++;
             ctx.clearRect(0, 0, W, H);
 
-            // Grid neon sutil no fundo (skip em low-end)
+            // Grid de pontos (estilo Stitch design, skip em low-end)
             if (!_low()) {
-                ctx.strokeStyle = 'rgba(139, 92, 246, 0.06)';
-                ctx.lineWidth = 1;
-                var gridSize = 60;
-                var gridOffset = (t * 0.3) % gridSize;
-
-                for (var gy = -gridSize + gridOffset; gy < H + gridSize; gy += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, gy);
-                    ctx.lineTo(W, gy);
-                    ctx.stroke();
-                }
-                for (var gx = 0; gx < W; gx += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(gx, 0);
-                    ctx.lineTo(gx, H);
-                    ctx.stroke();
+                var gridSize = 48;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                for (var gy = gridSize; gy < H; gy += gridSize) {
+                    for (var gx = gridSize; gx < W; gx += gridSize) {
+                        ctx.beginPath();
+                        ctx.arc(gx, gy, 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 }
             }
 
-            // Glow central (atras do mascote) — skip em low-end
+            // Glow central suave (atras do mascote, skip em low-end)
             if (!_low()) {
-                var glowPulse = 0.3 + Math.sin(t * 0.02) * 0.1;
-                var centerGlow = ctx.createRadialGradient(W / 2, H * 0.32, 0, W / 2, H * 0.32, Math.min(W, H) * 0.5);
-                centerGlow.addColorStop(0, 'rgba(139, 92, 246, ' + (glowPulse * 0.3) + ')');
-                centerGlow.addColorStop(0.5, 'rgba(168, 85, 247, ' + (glowPulse * 0.15) + ')');
-                centerGlow.addColorStop(1, 'rgba(168, 85, 247, 0)');
+                var glowPulse = 0.25 + Math.sin(t * 0.02) * 0.08;
+                var centerGlow = ctx.createRadialGradient(W / 2, H * 0.38, 0, W / 2, H * 0.38, Math.min(W, H) * 0.55);
+                centerGlow.addColorStop(0, 'rgba(109, 40, 217, ' + (glowPulse * 0.5) + ')');
+                centerGlow.addColorStop(0.6, 'rgba(109, 40, 217, ' + (glowPulse * 0.15) + ')');
+                centerGlow.addColorStop(1, 'rgba(109, 40, 217, 0)');
                 ctx.fillStyle = centerGlow;
                 ctx.fillRect(0, 0, W, H);
             }
 
-            // Particulas geometricas flutuando
-            particulas.forEach(function (p) {
-                // Mover particula
-                p.y -= p.speedY;
-                p.x += p.speedX + Math.sin(t * 0.01 + p.phase) * 0.3;
-                p.rotation += p.rotSpeed;
-
-                // Wrap around
-                if (p.y < -p.size * 2) {
-                    p.y = H + p.size * 2;
-                    p.x = Math.random() * W;
-                }
-                if (p.x < -p.size * 2) p.x = W + p.size * 2;
-                if (p.x > W + p.size * 2) p.x = -p.size * 2;
-
-                // Pulsar opacidade
-                var pulse = p.opacity * (0.7 + Math.sin(t * 0.03 + p.phase) * 0.3);
+            // Formas decorativas fixas com leve flutuacao
+            FORMAS_FIXAS.forEach(function(f) {
+                var fx = f.x * W;
+                var fy = f.y * H + Math.sin(t * 0.025 + f.phase) * 6;
+                var rot = Math.sin(t * 0.015 + f.phase) * 0.25;
+                var pulse = 0.75 + Math.sin(t * 0.03 + f.phase) * 0.25;
                 ctx.globalAlpha = pulse;
-                ctx.fillStyle = p.color;
-                drawShape(p.x, p.y, p.size, p.shape, p.rotation);
-            });
-
-            // Icones de game nos cantos (skip em low-end)
-            if (_low()) { ctx.globalAlpha = 1; splashAnimFrame = requestAnimationFrame(frame); return; }
-            ctx.globalAlpha = 0.08;
-
-            // Gamepad canto inferior esquerdo
-            var padX = W * 0.12;
-            var padY = H * 0.88 + Math.sin(t * 0.025) * 8;
-            ctx.fillStyle = '#a855f7';
-            ctx.beginPath();
-            ctx.roundRect(padX - 25, padY - 12, 50, 24, 8);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(padX - 12, padY, 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(padX + 12, padY, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Gamepad canto inferior direito
-            var pad2X = W * 0.88;
-            var pad2Y = H * 0.85 + Math.sin(t * 0.025 + 2) * 8;
-            ctx.fillStyle = '#22d3ee';
-            ctx.beginPath();
-            ctx.roundRect(pad2X - 25, pad2Y - 12, 50, 24, 8);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(pad2X - 12, pad2Y, 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(pad2X + 12, pad2Y, 6, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Estrelas brilhantes nos cantos
-            ctx.fillStyle = '#fbbf24';
-            var starPositions = [
-                { x: 0.08, y: 0.12 }, { x: 0.92, y: 0.1 }, { x: 0.15, y: 0.25 },
-                { x: 0.85, y: 0.28 }, { x: 0.05, y: 0.5 }, { x: 0.95, y: 0.45 }
-            ];
-            starPositions.forEach(function (sp, si) {
-                var sx = sp.x * W;
-                var sy = sp.y * H;
-                var twinkle = 0.5 + Math.sin(t * 0.06 + si * 1.5) * 0.5;
-                ctx.globalAlpha = 0.1 + twinkle * 0.15;
-
-                // Estrela de 4 pontas
-                ctx.save();
-                ctx.translate(sx, sy);
-                ctx.rotate(t * 0.01 + si);
-                var starSize = 6 + twinkle * 8;
-                ctx.beginPath();
-                ctx.moveTo(0, -starSize);
-                ctx.lineTo(starSize * 0.2, -starSize * 0.2);
-                ctx.lineTo(starSize, 0);
-                ctx.lineTo(starSize * 0.2, starSize * 0.2);
-                ctx.lineTo(0, starSize);
-                ctx.lineTo(-starSize * 0.2, starSize * 0.2);
-                ctx.lineTo(-starSize, 0);
-                ctx.lineTo(-starSize * 0.2, -starSize * 0.2);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
+                ctx.fillStyle = f.color;
+                drawShape(fx, fy, f.size, f.shape, rot);
             });
 
             ctx.globalAlpha = 1;
-
             splashAnimFrame = requestAnimationFrame(frame);
         }
         frame();
