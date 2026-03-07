@@ -410,6 +410,7 @@
             sdLevel: 0, sdHoldTimer: 0, hurtTimer: 0,
             rings: 0, score: 0,
             invincible: 0, celebrating: 0,
+            _restartQueued: false, _bestScore: (S && S._bestScore) || 0,
             ringItems: [], obstacles: [],
             scattered: [], confetti: [],
             dust: [], popups: [],
@@ -471,7 +472,8 @@
         else if (r < 0.58) type = 'eggman';
         else if (r < 0.82) type = 'spike';
         else               type = 'spring';
-        var oy = (type === 'eggman') ? GY - 50 : GY;
+        // Eggman flutua 30px acima do chão (pode ser atingido pelo pulo)
+        var oy = (type === 'eggman') ? GY - 30 : GY;
         S.obstacles.push({ x: W + 90, y: oy, type: type, t: 0, compressed: 0 });
     }
 
@@ -537,7 +539,20 @@
             }
         }
         if (S.phase === 'roll' && S.sdBoostFrames <= 0 && S.onGround) S.phase = 'run';
-        if (S.phase === 'hurt') { S.hurtTimer++; if (S.hurtTimer > 55) { S.phase = 'run'; S.hurtTimer = 0; } }
+        if (S.phase === 'hurt') {
+            S.hurtTimer++;
+            if (S.hurtTimer > 55) {
+                if (S._restartQueued) {
+                    // Sem anéis: reiniciar gentilmente (sem tela de game over)
+                    var best = S.score;
+                    initState();
+                    S._bestScore = best;
+                    sfxCelebrate();
+                } else {
+                    S.phase = 'run'; S.hurtTimer = 0;
+                }
+            }
+        }
         if (S.invincible > 0) S.invincible--;
 
         if (--S.nextRing <= 0) { spawnRings(); S.nextRing = 80; }
@@ -561,8 +576,8 @@
         S.obstacles = S.obstacles.filter(function (o) {
             o.x -= sp; o.t++;
             if (o.compressed > 0) o.compressed = Math.max(0, o.compressed - 0.09);
-            var bob = (o.type === 'eggman') ? Math.sin(o.t * 0.06) * 12 : 0;
-            var oc_cy = (o.type === 'eggman') ? (o.y + bob - 50) : (o.y - 28);
+            // Centro de colisão: para Eggman usa centro fixo (ignora bob visual)
+            var oc_cy = (o.type === 'eggman') ? (o.y - 50) : (o.y - 28);
             var dx = Math.abs(o.x - S.x), dy = Math.abs(oc_cy - S.y);
             var isEnemy = o.type === 'crabmeat' || o.type === 'motobug' || o.type === 'eggman';
 
@@ -573,8 +588,9 @@
                 return o.x > -70;
             }
 
-            var hitW = o.type === 'spike' ? 32 : (o.type === 'eggman' ? 45 : 28);
-            var hitH = o.type === 'spike' ? 36 : (o.type === 'eggman' ? 55 : 40);
+            // Eggman y=GY-30, centro=GY-80. Sonic y=GY. dy=80 → hitH deve ser >80
+            var hitW = o.type === 'spike' ? 32 : (o.type === 'eggman' ? 42 : 28);
+            var hitH = o.type === 'spike' ? 36 : (o.type === 'eggman' ? 90 : 40);
             if (S.invincible === 0 && S.phase !== 'hurt' && dx < hitW && dy < hitH) {
                 if (isSpinning && isEnemy) {
                     S.ysp = -8; S.onGround = false; S.score += 100; sfxEnemy();
@@ -583,12 +599,18 @@
                 } else if (!isSpinning || o.type === 'spike') {
                     S.invincible = 120; S.phase = 'hurt'; S.hurtTimer = 0;
                     S.ysp = -9; S.onGround = false;
-                    var lost = Math.min(S.rings, 3 + Math.floor(Math.random() * 5));
-                    for (var i = 0; i < lost; i++) {
-                        var ang = (i / Math.max(lost,1)) * Math.PI * 2;
-                        S.scattered.push({ x:S.x,y:S.y-20, vx:Math.cos(ang)*5.5, vy:Math.sin(ang)*5.5-3, life:65, t:0 });
+                    if (S.rings === 0) {
+                        // Sem anéis: agenda restart após animação hurt
+                        S._restartQueued = true;
+                    } else {
+                        var lost = Math.min(S.rings, 3 + Math.floor(Math.random() * 5));
+                        for (var i = 0; i < lost; i++) {
+                            var ang = (i / Math.max(lost,1)) * Math.PI * 2;
+                            S.scattered.push({ x:S.x,y:S.y-20, vx:Math.cos(ang)*5.5, vy:Math.sin(ang)*5.5-3, life:65, t:0 });
+                        }
+                        S.rings = Math.max(0, S.rings - lost);
                     }
-                    S.rings = Math.max(0, S.rings - lost); sfxHurt();
+                    sfxHurt();
                 }
             }
             return o.x > -85;
@@ -675,18 +697,32 @@
     function _drawBGImage() {
         var iw = _bgImg.naturalWidth;   // 1022
         var ih = _bgImg.naturalHeight;  // 498
-        // Escalar para altura total da tela
-        var dh = H;
-        var dw = iw * (H / ih);
-        // Parallax lento (40% da velocidade do foreground)
-        var off = (S.scroll * 0.40) % dw;
+
+        // Escalar para cobrir 58% da altura da tela (strip de cenário)
+        var dh = H * 0.58;
+        var dw = iw * (dh / ih);
+
+        // Grama do fundo.png está em ~57% da imagem (285/498)
+        // Posicionar para que essa linha coincida com GY
+        var GRASS_FRAC = 285 / 498;
+        var bgY = GY - dh * GRASS_FRAC;
+
+        // Céu sólido acima da imagem (cor do GHZ: azul escuro)
+        ctx.fillStyle = '#101070';
+        ctx.fillRect(0, 0, W, bgY + dh * 0.08);
+
+        // Parallax lento (35% da velocidade do foreground)
+        var off = (S.scroll * 0.35) % dw;
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(_bgImg, -off,       0, dw, dh);
-        ctx.drawImage(_bgImg, -off + dw,  0, dw, dh);
-        ctx.imageSmoothingEnabled = false;
-        // Estender solo abaixo da imagem
-        ctx.fillStyle = '#7A4010';
-        ctx.fillRect(0, H * 0.90, W, H * 0.10);
+        ctx.drawImage(_bgImg, -off,      bgY, dw, dh);
+        ctx.drawImage(_bgImg, -off + dw, bgY, dw, dh);
+
+        // Solo marrom abaixo da imagem
+        var soilY = bgY + dh;
+        if (soilY < H) {
+            ctx.fillStyle = '#7A4010';
+            ctx.fillRect(0, soilY, W, H - soilY);
+        }
     }
 
     function drawClouds(off) {
@@ -754,10 +790,10 @@
     }
 
     function drawEggman(o) {
-        // Bob vertical suave
-        var bob = Math.sin(o.t * 0.06) * 12;
+        // Bob vertical suave (apenas visual, colisão usa centro fixo)
+        var bob = Math.sin(o.t * 0.06) * 10;
         ctx.save();
-        ctx.translate(0, bob);
+        ctx.translate(0, -30 + bob); // desenha ~30px acima do chão + bob
         if (_eggmanImg && _eggmanImg.naturalWidth) {
             _renderGif('eggman', _eggmanImg, 100, 0.52);
         } else {
