@@ -53,6 +53,18 @@
             fechar: function () {
                 if (window.ReptilGame) window.ReptilGame.fechar();
             }
+        },
+        {
+            id: 'pacman',
+            nome: 'Pac-Man',
+            icon: 'adjust',
+            cor: 'linear-gradient(135deg,#fbbf24,#f59e0b)',
+            abrir: function () {
+                if (window.PacmanGame) window.PacmanGame.abrir();
+            },
+            fechar: function () {
+                if (window.PacmanGame) window.PacmanGame.fechar();
+            }
         }
     ];
 
@@ -90,7 +102,7 @@
         jogoAtual = jogo;
         mostrarTela('tela-jogo');
         // Jogos com overlay proprio (fullscreen) escondem a tela-jogo
-        if (jogo.id === 'escorpiao' || jogo.id === 'reptil') {
+        if (jogo.id === 'escorpiao' || jogo.id === 'reptil' || jogo.id === 'pacman') {
             document.getElementById('tela-jogo').classList.add('hidden');
         }
         jogo.abrir();
