@@ -348,6 +348,21 @@
             this._desenharCorpo(ctx, segs, t);
             this._desenharCauda(ctx, segs);
             this._desenharCabeca(ctx, segs[0], headAngle, t);
+
+            // Cursor visivel
+            const mx = this.targetX, my = this.targetY;
+            ctx.save();
+            ctx.globalAlpha = 0.7;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(mx, my, 6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(mx, my, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.restore();
         },
 
         // ---- Spawnar comida ----

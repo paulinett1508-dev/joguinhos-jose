@@ -585,7 +585,7 @@
     function iniciarSplashAnim() {
         desenharJose();
         desenharFundoSplash();
-        iniciarMusicaSplash();
+        // Musica inicia apenas apos gesto do usuario (ver tentarIniciarMusica)
     }
 
     function pararSplashAnim() {
@@ -631,19 +631,16 @@
         // Iniciar animacoes do splash
         iniciarSplashAnim();
 
-        // Musica: resume AudioContext na primeira interacao do usuario
-        // (necessario para mobile onde AC comeca suspenso)
+        // Musica: inicia apenas apos primeira interacao do usuario
+        var _musicaIniciada = false;
         function tentarIniciarMusica() {
-            if (!_splashAC || _splashAC.state !== 'suspended' || !_splashMusicActive) return;
-            // Remover listeners apos primeira interacao bem-sucedida
+            if (_musicaIniciada) return;
+            _musicaIniciada = true;
             ['click', 'touchstart', 'keydown'].forEach(function (evt) {
                 document.removeEventListener(evt, tentarIniciarMusica);
             });
-            _splashAC.resume().then(function () {
-                if (_splashMusicActive && !_splashNoteTimer) _agendarNota(0);
-            });
+            iniciarMusicaSplash();
         }
-        // Capturar qualquer interacao no documento
         ['click', 'touchstart', 'keydown'].forEach(function (evt) {
             document.addEventListener(evt, tentarIniciarMusica, { passive: true });
         });
