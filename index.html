@@ -202,6 +202,25 @@
                 inset 0 2px 0 rgba(255,255,255,0.2);
         }
 
+        /* ---- LOW-PERF: reduzir animacoes caras ---- */
+        .low-perf .splash-jose {
+            filter: none !important;
+            animation: slam-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+        }
+        .low-perf .splash-title h1 {
+            animation: none !important;
+        }
+        .low-perf .btn-jogar::before {
+            animation: none !important;
+            display: none;
+        }
+        .low-perf .tela {
+            transition: none !important;
+        }
+        .low-perf .tela.hidden {
+            transition: none !important;
+        }
+
         /* ---- HUB ---- */
         #tela-hub {
             background: var(--bg-dark);
@@ -444,6 +463,9 @@
         </button>
         <div id="jogo-container"></div>
     </div>
+
+    <!-- Deteccao de performance (DEVE carregar antes dos jogos) -->
+    <script src="jogos/perf-detect.js?v=1"></script>
 
     <!-- Scripts dos jogos -->
     <script src="jogos/penaltis.js?v=2"></script>

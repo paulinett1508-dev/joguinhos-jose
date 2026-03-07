@@ -38,6 +38,7 @@
 
         fechar() {
             this._fecharAnimacao();
+            this._scoreElCache = null;
             if (this._container) {
                 this._container.style.display = 'none';
                 this._container.innerHTML = '';
@@ -571,8 +572,9 @@
                     ctx.fillText(`Def: ${defesas}`, W - 8, 13);
                 }
 
-                // Score div
-                const scoreEl = document.getElementById('penaltyScore');
+                // Score div (cached)
+                if (!this._scoreElCache) this._scoreElCache = document.getElementById('penaltyScore');
+                const scoreEl = this._scoreElCache;
                 if (scoreEl) {
                     const atual = cobradas + (state === 'aiming' ? 1 : 0);
                     scoreEl.textContent = state === 'gameover'
