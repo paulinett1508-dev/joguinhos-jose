@@ -65,6 +65,18 @@
             fechar: function () {
                 if (window.PacmanGame) window.PacmanGame.fechar();
             }
+        },
+        {
+            id: 'tamandua',
+            nome: 'Tamandua',
+            icon: 'pets',
+            cor: 'linear-gradient(135deg,#8b5cf6,#6d28d9)',
+            abrir: function () {
+                if (window.TamanduaGame) window.TamanduaGame.abrir();
+            },
+            fechar: function () {
+                if (window.TamanduaGame) window.TamanduaGame.fechar();
+            }
         }
     ];
 

@@ -40,6 +40,7 @@ jogos/
   escorpiao.js          # Jogo Escorpiao (standalone)
   reptil.js             # Jogo Reptil (standalone, IK procedural)
   pacman.js             # Jogo Pac-Man (standalone)
+  tamandua.js           # Jogo Tamandua Runner (standalone, IK procedural)
   joguinhos-modal.js    # Sistema de navegacao (splash → hub → jogo)
 assets/
   sons/                 # Futuros arquivos de audio (se necessario)
@@ -54,6 +55,7 @@ Cada jogo e um IIFE que expoe um objeto global:
 - `window.EscorpiaoGame` — com metodos `abrir()` e `fechar()`
 - `window.ReptilGame` — com metodos `abrir()` e `fechar()`
 - `window.PacmanGame` — com metodos `abrir()` e `fechar()`
+- `window.TamanduaGame` — com metodos `abrir()` e `fechar()`
 
 ### Sistema de Telas (joguinhos-modal.js)
 ```
@@ -237,7 +239,7 @@ Ao criar ou modificar jogos, aplicar as 5 dimensoes:
 Formato: `type(scope): descricao em imperativo`
 
 Tipos: `feat` | `fix` | `docs` | `refactor` | `chore` | `perf` | `test`
-Escopos: `penaltis` | `escorpiao` | `reptil` | `pacman` | `hub` | `splash` | `deps` | `infra`
+Escopos: `penaltis` | `escorpiao` | `reptil` | `pacman` | `tamandua` | `hub` | `splash` | `deps` | `infra`
 
 Exemplos:
 ```
@@ -283,6 +285,17 @@ refactor(escorpiao): cachear grade em offscreen canvas
 - 3 fases progressivas, 3 vidas
 - Power pellets ativam modo scared nos fantasmas
 - Controles: mouse/touch para direcionar, ESC para sair
+
+### Tamandua (`tamandua.js`)
+- Canvas fullscreen, runner automatico com tamandua procedural
+- IK esqueletica reutilizada do reptil.js (Segment, LimbSystem, LegSystem)
+- 2 pares de pernas com auto-stepping procedural
+- Focinho longo (5 segmentos), corpo robusto, cauda peluda (8 segmentos)
+- Formigas como coletaveis, obstaculos para pular (troncos, pedras, formigueiros)
+- Sem game over — tropecar reduz velocidade mas continua
+- Celebracao a cada 10 formigas coletadas (confetti + som)
+- Parallax: montanhas + arvores + chao com grama
+- Controles: toque em qualquer lugar para pular, Espaco/Seta, ESC para sair
 
 ### Tecnologias Reutilizaveis Entre Jogos
 

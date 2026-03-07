@@ -37,6 +37,15 @@ Pac-Man simplificado para criancas em canvas fullscreen.
 - **Fases:** 3 fases progressivas, 3 vidas
 - **Controles:** Mouse/touch para direcionar, ESC para sair
 
+### Tamandua
+Runner automatico com tamandua procedural usando IK esqueletica.
+
+- **IK:** Pernas com auto-stepping procedural (tecnologia do Reptil)
+- **Mecanica:** Toque para pular obstaculos, colete formigas
+- **Sem game over:** Tropecar reduz velocidade, nao elimina
+- **Visual:** Parallax com montanhas, arvores e grama
+- **Controles:** Toque/clique em qualquer lugar para pular, ESC para sair
+
 ## Como Usar
 
 ### Demo rapida
@@ -53,6 +62,7 @@ Abra `index.html` no navegador (ou acesse via Vercel).
 <script src="jogos/escorpiao.js"></script>
 <script src="jogos/reptil.js"></script>
 <script src="jogos/pacman.js"></script>
+<script src="jogos/tamandua.js"></script>
 <script src="jogos/joguinhos-modal.js"></script>
 ```
 
@@ -77,6 +87,10 @@ window.ReptilGame.fechar();
 // Pac-Man direto (fullscreen)
 window.PacmanGame.abrir();
 window.PacmanGame.fechar();
+
+// Tamandua direto (fullscreen)
+window.TamanduaGame.abrir();
+window.TamanduaGame.fechar();
 ```
 
 ## Estrutura
@@ -89,6 +103,7 @@ jogos/
   escorpiao.js          # Jogo Escorpiao standalone
   reptil.js             # Jogo Reptil standalone (IK procedural)
   pacman.js             # Jogo Pac-Man standalone
+  tamandua.js           # Jogo Tamandua Runner standalone (IK procedural)
   joguinhos-modal.js    # Modal de selecao de jogos
 assets/
   sons/                 # Futuros arquivos de audio
