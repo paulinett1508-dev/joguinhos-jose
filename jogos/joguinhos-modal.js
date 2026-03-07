@@ -277,6 +277,7 @@
         var t = 0;
 
         function frame() {
+            if (!cv.isConnected) return; // para quando o canvas sair do DOM
             t++;
             c.clearRect(0, 0, W, H);
 

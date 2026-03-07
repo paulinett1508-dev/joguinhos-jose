@@ -121,7 +121,7 @@
         if (!oc || oc.width !== dw || oc.height !== dh) {
             oc = _gifCanvases[key] = document.createElement('canvas');
             oc.width = dw; oc.height = dh;
-            ox = _gifCtxs[key] = oc.getContext('2d');
+            ox = _gifCtxs[key] = oc.getContext('2d', { willReadFrequently: true });
         }
         ox.clearRect(0, 0, dw, dh);
         ox.drawImage(img, 0, 0, dw, dh);
