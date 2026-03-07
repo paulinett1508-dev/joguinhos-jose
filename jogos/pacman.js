@@ -1,5 +1,5 @@
 // =====================================================================
-// pacman.js — Jogo Pac-Man Standalone v1.1
+// pacman.js — Jogo Pac-Man Standalone v1.2
 // =====================================================================
 // Pac-Man simplificado para criancas
 // Controles: toque/mouse para direcionar, ESC para sair
@@ -122,6 +122,33 @@
         setTimeout(function () { self._tocar(784, 0.12, 'square', 0.12); }, 160);
     };
 
+    SomPacman.prototype.faseCompleta = function () {
+        // Fanfarra de fase completa
+        var self = this;
+        var notas = [523, 659, 784, 1047];
+        for (var i = 0; i < notas.length; i++) {
+            (function (freq, delay) {
+                setTimeout(function () {
+                    self._tocar(freq, 0.2, 'square', 0.12);
+                }, delay);
+            })(notas[i], i * 150);
+        }
+    };
+
+    SomPacman.prototype.vitoria = function () {
+        // Fanfarra de vitoria final
+        var self = this;
+        var melodia = [523, 523, 523, 659, 784, 659, 784, 1047];
+        var tempos = [0, 150, 300, 450, 600, 900, 1050, 1200];
+        for (var i = 0; i < melodia.length; i++) {
+            (function (freq, delay) {
+                setTimeout(function () {
+                    self._tocar(freq, 0.25, 'square', 0.15);
+                }, delay);
+            })(melodia[i], tempos[i]);
+        }
+    };
+
     SomPacman.prototype.fechar = function () {
         if (this.audioCtx) {
             this.audioCtx.close().catch(function () {});
@@ -140,10 +167,15 @@
         ghosts: [],
         pelletCount: 0,
         score: 0,
+        fase: 1,
+        maxFases: 3,
         powerMode: false,
         powerTimer: null,
         lastWaka: 0,
         targetDir: { x: 0, y: 0 },
+        scoreDiv: null,
+        faseDiv: null,
+        vitoriaDiv: null,
         _onKey: null,
         _onResize: null,
 
@@ -204,6 +236,7 @@
             }
 
             self.score = 0;
+            self.fase = 1;
             self.powerMode = false;
             self.targetDir = { x: 0, y: 0 };
 
@@ -242,6 +275,22 @@
             scoreDiv.textContent = '0';
             self.scoreDiv = scoreDiv;
 
+            // Fase display
+            var faseDiv = document.createElement('div');
+            faseDiv.id = 'pacman-fase';
+            faseDiv.style.cssText = [
+                'position:absolute',
+                'top:50px',
+                'left:50%',
+                'transform:translateX(-50%)',
+                'font-family:JetBrains Mono,monospace',
+                'font-size:1rem',
+                'color:#ffff00',
+                'text-shadow:0 0 8px #ffff00',
+            ].join(';');
+            faseDiv.textContent = 'Fase 1/3';
+            self.faseDiv = faseDiv;
+
             // Botao fechar
             var closeBtn = document.createElement('button');
             closeBtn.style.cssText = [
@@ -267,6 +316,7 @@
 
             overlay.appendChild(canvas);
             overlay.appendChild(scoreDiv);
+            overlay.appendChild(faseDiv);
             overlay.appendChild(closeBtn);
             document.body.appendChild(overlay);
 
@@ -503,7 +553,9 @@
 
         _moverGhost: function (ghost, index) {
             var cell = CONF.CELL;
-            var speed = CONF.GHOST_SPEED * (ghost.scared ? 0.5 : 1);
+            // Velocidade aumenta com cada fase (1.0x, 1.3x, 1.6x)
+            var faseMultiplier = 1 + (this.fase - 1) * 0.3;
+            var speed = CONF.GHOST_SPEED * faseMultiplier * (ghost.scared ? 0.5 : 1);
 
             // Checar se pode continuar
             var canContinue = this._podeAndarGhost(ghost.x, ghost.y, ghost.dir);
@@ -595,6 +647,26 @@
         },
 
         _resetMapa: function () {
+            var self = this;
+
+            // Proxima fase
+            this.fase++;
+
+            // Vitoria final?
+            if (this.fase > this.maxFases) {
+                this._mostrarVitoria();
+                return;
+            }
+
+            // Som de fase completa
+            this.som.faseCompleta();
+
+            // Atualizar display de fase
+            if (this.faseDiv) {
+                this.faseDiv.textContent = 'Fase ' + this.fase + '/' + this.maxFases;
+            }
+
+            // Recarregar mapa
             this.pelletCount = 0;
             for (var y = 0; y < MAPA_BASE.length; y++) {
                 for (var x = 0; x < MAPA_BASE[y].length; x++) {
@@ -604,6 +676,172 @@
                     }
                 }
             }
+
+            // Resetar posicoes
+            var cell = CONF.CELL;
+            this.pacman.x = 9 * cell + cell / 2;
+            this.pacman.y = 15 * cell + cell / 2;
+            this.pacman.dir = { x: 0, y: 0 };
+
+            var ghostPositions = [
+                { x: 9, y: 9 },
+                { x: 8, y: 9 },
+                { x: 10, y: 9 },
+                { x: 9, y: 8 },
+            ];
+            for (var i = 0; i < this.ghosts.length; i++) {
+                this.ghosts[i].x = ghostPositions[i].x * cell + cell / 2;
+                this.ghosts[i].y = ghostPositions[i].y * cell + cell / 2;
+                this.ghosts[i].scared = false;
+            }
+        },
+
+        _mostrarVitoria: function () {
+            var self = this;
+
+            // Pausar jogo
+            if (this.animFrame) {
+                cancelAnimationFrame(this.animFrame);
+                this.animFrame = null;
+            }
+
+            // Tocar som de vitoria
+            this.som.vitoria();
+
+            // Criar tela de vitoria
+            var vitoriaDiv = document.createElement('div');
+            vitoriaDiv.id = 'pacman-vitoria';
+            vitoriaDiv.style.cssText = [
+                'position:absolute',
+                'inset:0',
+                'background:rgba(0,0,0,0.9)',
+                'display:flex',
+                'flex-direction:column',
+                'align-items:center',
+                'justify-content:center',
+                'gap:24px',
+                'z-index:100',
+            ].join(';');
+
+            var titulo = document.createElement('div');
+            titulo.style.cssText = [
+                'font-family:Russo One,sans-serif',
+                'font-size:2rem',
+                'color:#ffff00',
+                'text-align:center',
+                'text-shadow:0 0 20px #ffff00',
+                'animation:pulse 1s infinite',
+            ].join(';');
+            titulo.innerHTML = 'Parabens<br>Jose Afonso!';
+
+            var subtitulo = document.createElement('div');
+            subtitulo.style.cssText = [
+                'font-family:Inter,sans-serif',
+                'font-size:1.2rem',
+                'color:#fff',
+                'text-align:center',
+            ].join(';');
+            subtitulo.textContent = 'Voce conseguiu! Score: ' + this.score;
+
+            var botoes = document.createElement('div');
+            botoes.style.cssText = 'display:flex;gap:16px;margin-top:20px;';
+
+            var btnJogar = document.createElement('button');
+            btnJogar.style.cssText = [
+                'background:linear-gradient(180deg,#22c55e,#16a34a)',
+                'color:#fff',
+                'border:none',
+                'padding:16px 32px',
+                'border-radius:12px',
+                'font-family:Russo One,sans-serif',
+                'font-size:1rem',
+                'cursor:pointer',
+                'box-shadow:0 4px 0 #166534',
+            ].join(';');
+            btnJogar.textContent = 'Jogar de Novo';
+            btnJogar.addEventListener('click', function () {
+                vitoriaDiv.remove();
+                self._reiniciarJogo();
+            });
+
+            var btnOutro = document.createElement('button');
+            btnOutro.style.cssText = [
+                'background:linear-gradient(180deg,#3b82f6,#2563eb)',
+                'color:#fff',
+                'border:none',
+                'padding:16px 32px',
+                'border-radius:12px',
+                'font-family:Russo One,sans-serif',
+                'font-size:1rem',
+                'cursor:pointer',
+                'box-shadow:0 4px 0 #1d4ed8',
+            ].join(';');
+            btnOutro.textContent = 'Outro Jogo';
+            btnOutro.addEventListener('click', function () {
+                window.fecharJoguinhos ? window.fecharJoguinhos() : self.fechar();
+            });
+
+            botoes.appendChild(btnJogar);
+            botoes.appendChild(btnOutro);
+            vitoriaDiv.appendChild(titulo);
+            vitoriaDiv.appendChild(subtitulo);
+            vitoriaDiv.appendChild(botoes);
+
+            var overlay = document.getElementById('pacman-overlay');
+            if (overlay) overlay.appendChild(vitoriaDiv);
+            this.vitoriaDiv = vitoriaDiv;
+        },
+
+        _reiniciarJogo: function () {
+            var self = this;
+            var cell = CONF.CELL;
+
+            // Resetar estado
+            this.score = 0;
+            this.fase = 1;
+            this.powerMode = false;
+
+            // Resetar mapa
+            this.pelletCount = 0;
+            for (var y = 0; y < MAPA_BASE.length; y++) {
+                for (var x = 0; x < MAPA_BASE[y].length; x++) {
+                    this.mapa[y][x] = MAPA_BASE[y][x];
+                    if (MAPA_BASE[y][x] === 2 || MAPA_BASE[y][x] === 3) {
+                        this.pelletCount++;
+                    }
+                }
+            }
+
+            // Resetar Pac-Man
+            this.pacman.x = 9 * cell + cell / 2;
+            this.pacman.y = 15 * cell + cell / 2;
+            this.pacman.dir = { x: 0, y: 0 };
+
+            // Resetar fantasmas
+            var ghostPositions = [
+                { x: 9, y: 9 },
+                { x: 8, y: 9 },
+                { x: 10, y: 9 },
+                { x: 9, y: 8 },
+            ];
+            for (var i = 0; i < this.ghosts.length; i++) {
+                this.ghosts[i].x = ghostPositions[i].x * cell + cell / 2;
+                this.ghosts[i].y = ghostPositions[i].y * cell + cell / 2;
+                this.ghosts[i].scared = false;
+            }
+
+            // Atualizar displays
+            if (this.scoreDiv) this.scoreDiv.textContent = '0';
+            if (this.faseDiv) this.faseDiv.textContent = 'Fase 1/3';
+
+            // Reiniciar loop
+            var loop = function () {
+                if (!self.ctx) return;
+                self._atualizar();
+                self._renderizar();
+                self.animFrame = requestAnimationFrame(loop);
+            };
+            loop();
         },
 
         _renderizar: function () {
