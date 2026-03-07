@@ -11,14 +11,14 @@
 
     // ---- Configuracao ----
     var CONF = {
-        // Cores base
-        BG: '#050a14',
-        SKY_TOP: '#0a0a2e',
-        SKY_BOTTOM: '#0f1a3a',
-        GROUND_COLOR: '#1a3a1a',
-        GRASS_COLOR: '#2d5a2d',
-        GRASS_TIP: '#3d7a3d',
-        DIRT_COLOR: '#1a2a10',
+        // Cores base (dia ensolarado)
+        BG: '#87CEEB',
+        SKY_TOP: '#4A90D9',
+        SKY_BOTTOM: '#87CEEB',
+        GROUND_COLOR: '#4a8c3f',
+        GRASS_COLOR: '#5aad4a',
+        GRASS_TIP: '#6dc45e',
+        DIRT_COLOR: '#8B7355',
 
         // Tamandua
         BODY: '#8B4513',
@@ -40,19 +40,19 @@
         ANT_LEG: '#660000',
 
         // Obstaculos
-        LOG_COLOR: '#4a3020',
-        LOG_LIGHT: '#6a4a30',
-        LOG_RING: '#3a2010',
-        ROCK_COLOR: '#4a4a4a',
-        ROCK_LIGHT: '#6a6a6a',
-        ROCK_DARK: '#2a2a2a',
-        ANTHILL_COLOR: '#5a3a1a',
-        ANTHILL_LIGHT: '#7a5a2a',
+        LOG_COLOR: '#6B4226',
+        LOG_LIGHT: '#8B6240',
+        LOG_RING: '#5a3520',
+        ROCK_COLOR: '#808080',
+        ROCK_LIGHT: '#a0a0a0',
+        ROCK_DARK: '#606060',
+        ANTHILL_COLOR: '#8B6914',
+        ANTHILL_LIGHT: '#a08030',
 
         // Parallax
-        MOUNTAIN_COLOR: '#0d1a30',
-        MOUNTAIN_LIGHT: '#132040',
-        CLOUD_COLOR: 'rgba(100,120,160,0.15)',
+        MOUNTAIN_COLOR: '#6B8E6B',
+        MOUNTAIN_LIGHT: '#8BAF8B',
+        CLOUD_COLOR: 'rgba(255,255,255,0.7)',
         STAR_COLOR: '#ffffff',
 
         // Fisica (Chrome Dino style)
@@ -652,19 +652,19 @@
             // Score display
             var scoreDiv = document.createElement('div');
             scoreDiv.id = 'tamandua-score';
-            scoreDiv.style.cssText = 'position:absolute;top:16px;right:20px;color:#fff;font-family:"JetBrains Mono","Courier New",monospace;font-size:clamp(1rem,3vw,1.5rem);text-shadow:0 0 10px rgba(210,105,30,0.6);pointer-events:none;text-align:right;';
+            scoreDiv.style.cssText = 'position:absolute;top:16px;right:20px;color:#2d1a00;font-family:"JetBrains Mono","Courier New",monospace;font-size:clamp(1rem,3vw,1.5rem);text-shadow:0 1px 3px rgba(255,255,255,0.5);pointer-events:none;text-align:right;';
             scoreDiv.innerHTML = '<div id="tamandua-lives" style="font-size:clamp(1.2rem,4vw,2rem);color:#e74c3c;letter-spacing:4px;"></div>' +
-                '<div id="tamandua-phase" style="margin-top:4px;font-size:clamp(0.7rem,2vw,1rem);color:#fde047;font-family:Russo One,sans-serif;"></div>' +
+                '<div id="tamandua-phase" style="margin-top:4px;font-size:clamp(0.7rem,2vw,1rem);color:#b8860b;font-family:Russo One,sans-serif;text-shadow:0 1px 2px rgba(255,255,255,0.6);"></div>' +
                 '<div id="tamandua-dist" style="font-size:clamp(1.2rem,4vw,2rem);font-weight:bold;margin-top:4px;">00000</div>' +
                 '<div id="tamandua-ants" style="margin-top:4px;color:#cc3333;font-size:clamp(0.8rem,2.5vw,1.2rem);"><span style="font-family:\'Material Icons\';font-size:inherit;vertical-align:middle;">pest_control</span> <span id="tamandua-ant-count">0</span></div>' +
-                '<div id="tamandua-goal" style="margin-top:2px;font-size:clamp(0.6rem,1.8vw,0.85rem);color:rgba(255,255,255,0.5);"></div>';
+                '<div id="tamandua-goal" style="margin-top:2px;font-size:clamp(0.6rem,1.8vw,0.85rem);color:rgba(0,0,0,0.45);"></div>';
             overlay.appendChild(scoreDiv);
             this._updateLivesUI();
             this._updatePhaseUI();
 
             // Close button
             var closeBtn = document.createElement('button');
-            closeBtn.style.cssText = 'position:absolute;top:12px;left:12px;width:64px;height:64px;border:none;background:rgba(0,0,0,0.4);color:#fff;border-radius:50%;font-size:32px;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;font-family:"Material Icons";touch-action:manipulation;';
+            closeBtn.style.cssText = 'position:absolute;top:12px;left:12px;width:64px;height:64px;border:none;background:rgba(0,0,0,0.25);color:#fff;border-radius:50%;font-size:32px;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;font-family:"Material Icons";touch-action:manipulation;';
             closeBtn.textContent = 'close';
             closeBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
@@ -1097,10 +1097,10 @@
                 // Flash distance display
                 var distEl = document.getElementById('tamandua-dist');
                 if (distEl) {
-                    distEl.style.color = '#fde047';
+                    distEl.style.color = '#b8860b';
                     var t = this._timeouts;
                     t.push(setTimeout(function () {
-                        if (distEl) distEl.style.color = '#fff';
+                        if (distEl) distEl.style.color = '#2d1a00';
                     }, 300));
                 }
             }
@@ -1353,32 +1353,32 @@
                 ctx.translate(this.shakeX, this.shakeY);
             }
 
-            // ---- Sky gradient ----
-            // Progresses with speed
-            var speedRatio = Math.min(1, this.speed / CONF.MAX_SPEED);
-            var skyR = 10 + speedRatio * 15;
-            var skyG = 10 + speedRatio * 5;
-            var skyB = 46 + speedRatio * 20;
+            // ---- Sky gradient (dia ensolarado) ----
             var grad = ctx.createLinearGradient(0, 0, 0, gY);
-            grad.addColorStop(0, 'rgb(' + Math.floor(skyR) + ',' + Math.floor(skyG) + ',' + Math.floor(skyB) + ')');
+            grad.addColorStop(0, CONF.SKY_TOP);
             grad.addColorStop(1, CONF.SKY_BOTTOM);
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, W, H);
 
-            // ---- Stars ----
-            var starAlpha = Math.max(0, 1 - speedRatio * 1.5);
-            if (starAlpha > 0) {
-                ctx.fillStyle = CONF.STAR_COLOR;
-                for (var si = 0; si < this.stars.length; si++) {
-                    var star = this.stars[si];
-                    var twinkle = Math.sin(this.frameCount * 0.03 + star.twinkle) * 0.4 + 0.6;
-                    ctx.globalAlpha = starAlpha * twinkle;
-                    ctx.beginPath();
-                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.globalAlpha = 1;
-            }
+            // ---- Sol ----
+            var sunX = W * 0.85;
+            var sunY = H * 0.12;
+            var sunR = 35;
+            // Sun glow
+            var sunGlow = ctx.createRadialGradient(sunX, sunY, sunR * 0.5, sunX, sunY, sunR * 3);
+            sunGlow.addColorStop(0, 'rgba(255,240,100,0.4)');
+            sunGlow.addColorStop(0.5, 'rgba(255,220,80,0.1)');
+            sunGlow.addColorStop(1, 'rgba(255,220,80,0)');
+            ctx.fillStyle = sunGlow;
+            ctx.fillRect(0, 0, W, H);
+            // Sun disc
+            ctx.fillStyle = '#FFE066';
+            ctx.shadowColor = '#FFE066';
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
 
             // ---- Clouds ----
             ctx.fillStyle = CONF.CLOUD_COLOR;
@@ -1453,7 +1453,7 @@
             }
 
             // Ground pebbles
-            ctx.fillStyle = 'rgba(80,80,60,0.3)';
+            ctx.fillStyle = 'rgba(60,40,20,0.25)';
             for (var pi = 0; pi < this.groundPebbles.length; pi++) {
                 var pb = this.groundPebbles[pi];
                 var px = ((pb.offset - gOffset) % (W * 2));
@@ -1531,17 +1531,19 @@
             if (this.celebrateTimer > 0) {
                 var cAlpha = Math.min(1, this.celebrateTimer / 30);
                 ctx.globalAlpha = cAlpha;
-                ctx.fillStyle = '#fde047';
+                ctx.fillStyle = '#fff';
                 ctx.font = 'bold clamp(2rem,8vw,4rem) "Russo One",sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowColor = '#fde047';
-                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                ctx.shadowBlur = 8;
+                ctx.strokeStyle = '#b8860b';
+                ctx.lineWidth = 3;
+                ctx.strokeText('Parabens!', W / 2, H * 0.3);
                 ctx.fillText('Parabens!', W / 2, H * 0.3);
                 ctx.font = 'clamp(1rem,4vw,1.8rem) "Russo One",sans-serif';
-                ctx.fillStyle = '#D2691E';
-                ctx.shadowColor = '#D2691E';
-                ctx.shadowBlur = 15;
+                ctx.fillStyle = '#5C3317';
+                ctx.shadowBlur = 4;
                 ctx.fillText(this.score + ' formigas!', W / 2, H * 0.3 + 50);
                 ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1;
@@ -1551,12 +1553,15 @@
             if (this.phaseBannerTimer > 0) {
                 var pbAlpha = Math.min(1, this.phaseBannerTimer / 30);
                 ctx.globalAlpha = pbAlpha;
-                ctx.fillStyle = '#38bdf8';
+                ctx.fillStyle = '#fff';
                 ctx.font = 'bold clamp(2.5rem,10vw,5rem) "Russo One",sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowColor = '#38bdf8';
-                ctx.shadowBlur = 40;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 8;
+                ctx.strokeStyle = '#2d6b2d';
+                ctx.lineWidth = 4;
+                ctx.strokeText('Fase ' + this.phase + '!', W / 2, H * 0.3);
                 ctx.fillText('Fase ' + this.phase + '!', W / 2, H * 0.3);
                 ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1;
@@ -1564,28 +1569,31 @@
 
             // ---- Game Over screen ----
             if (this.state === 'GAMEOVER') {
-                // Dim overlay
-                ctx.fillStyle = 'rgba(5,10,20,0.6)';
+                // Light semi-transparent overlay
+                ctx.fillStyle = 'rgba(255,255,255,0.55)';
                 ctx.fillRect(0, 0, W, H);
 
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
                 // Positive message
-                ctx.fillStyle = '#fde047';
+                ctx.fillStyle = '#fff';
                 ctx.font = 'bold clamp(2.5rem,10vw,5rem) "Russo One",sans-serif';
-                ctx.shadowColor = '#fde047';
-                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 8;
+                ctx.strokeStyle = '#b8860b';
+                ctx.lineWidth = 4;
+                ctx.strokeText('Muito bem!', W / 2, H * 0.3);
                 ctx.fillText('Muito bem!', W / 2, H * 0.3);
                 ctx.shadowBlur = 0;
 
                 // Score summary
-                ctx.fillStyle = '#fff';
+                ctx.fillStyle = '#3a2010';
                 ctx.font = 'clamp(1rem,4vw,1.8rem) "Russo One",sans-serif';
                 ctx.fillText(this.score + ' formigas', W / 2, H * 0.3 + 60);
 
                 // Phase reached
-                ctx.fillStyle = '#38bdf8';
+                ctx.fillStyle = '#2d6b2d';
                 ctx.font = 'clamp(0.8rem,3vw,1.3rem) "Russo One",sans-serif';
                 ctx.fillText('Fase ' + this.phase, W / 2, H * 0.3 + 100);
 
@@ -1593,10 +1601,13 @@
                 if (this.gameOverReady) {
                     var goPulse = Math.sin(this.frameCount * 0.06) * 0.3 + 0.7;
                     ctx.globalAlpha = goPulse;
-                    ctx.fillStyle = '#34d399';
+                    ctx.fillStyle = '#fff';
                     ctx.font = 'bold clamp(1.2rem,5vw,2.2rem) "Russo One",sans-serif';
-                    ctx.shadowColor = '#34d399';
-                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                    ctx.shadowBlur = 6;
+                    ctx.strokeStyle = '#2d8c2d';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText('Jogar!', W / 2, H * 0.55);
                     ctx.fillText('Jogar!', W / 2, H * 0.55);
                     ctx.shadowBlur = 0;
                     ctx.globalAlpha = 1;
@@ -1608,12 +1619,15 @@
                 // Pulsing text
                 var pulse = Math.sin(this.frameCount * 0.06) * 0.3 + 0.7;
                 ctx.globalAlpha = pulse;
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = '#fff';
                 ctx.font = 'bold clamp(1.2rem,5vw,2.5rem) "Russo One",sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.shadowColor = '#D2691E';
-                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 6;
+                ctx.strokeStyle = '#5C3317';
+                ctx.lineWidth = 3;
+                ctx.strokeText('Toque para correr!', W / 2, H * 0.45);
                 ctx.fillText('Toque para correr!', W / 2, H * 0.45);
                 ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1;
