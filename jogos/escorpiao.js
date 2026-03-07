@@ -1,12 +1,10 @@
 // =====================================================================
-// escorpiao.js — Jogo Escorpiao Standalone v2.2
+// escorpiao.js — Jogo Escorpiao Standalone v3.0
 // =====================================================================
-// - Maca (vermelha): escorpiao cresce | Brocolis (verde): encolhe
-// - Crianca pode IGNORAR o brocolis (ele some sozinho)
-// - Varias comidas acumulam na tela (max depende da fase)
-// - Comidas somem se nao forem comidas a tempo (piscam antes de sumir)
-// - MAX_SEGS: passa de fase (comidas somem mais rapido)
-// - GAMEOVER_SEGS: escorpiao ficou pequenininho -> reinicia
+// 3 fases fechadas com condicoes de vitoria e derrota
+// Maca (+10pts, cresce) | Brocolis (-5pts, encolhe)
+// 3 macas ignoradas -> game over | corpo minimo -> game over
+// pontos zerados -> game over | Fase 3 completa -> vitoria!
 // =====================================================================
 
 (function () {
@@ -15,23 +13,26 @@
     function _lerp(a, b, t) { return a + (b - a) * t; }
 
     const CONF = {
-        BODY_START:      1,
-        TAIL_LEN:        6,
-        HEAD_LERP:       0.10,
-        SEG_DIST:        22,
-        EAT_RADIUS:      32,
-        FOOD_MARGIN:     70,
-        INITIAL_SEGS:    7,
-        GAMEOVER_SEGS:   4,   // reinicia se encolher ate aqui
-        MAX_SEGS:        34,  // passa de fase se crescer ate aqui
-        GROW_AMOUNT:     3,
-        SHRINK_AMOUNT:   3,
-        BLINK_THRESHOLD: 90,  // frames antes de sumir que começa a piscar
-        // Config por fase (index 0 = fase 1, etc.)
+        BODY_START:          1,
+        TAIL_LEN:            6,
+        HEAD_LERP:           0.10,
+        SEG_DIST:            22,
+        EAT_RADIUS:          32,
+        FOOD_MARGIN:         70,
+        INITIAL_SEGS:        7,
+        GAMEOVER_SEGS:       4,
+        MAX_SEGS:            34,
+        GROW_AMOUNT:         3,
+        SHRINK_AMOUNT:       3,
+        BLINK_THRESHOLD:     90,
+        MAX_MISSED:          3,    // macas ignoradas antes do game over
+        POINTS_APPLE:        10,
+        POINTS_LOST_BROC:    5,
+        FASE_BONUS:          50,   // bonus ao passar de fase
         FASES: [
-            { spawnInterval: 180, foodLife: 420, maxFoods: 3 }, // fase 1: 3s spawn, 7s vida, max 3
-            { spawnInterval: 120, foodLife: 240, maxFoods: 4 }, // fase 2: 2s spawn, 4s vida, max 4
-            { spawnInterval:  80, foodLife: 180, maxFoods: 5 }, // fase 3: 1.3s spawn, 3s vida, max 5
+            { spawnInterval: 180, foodLife: 420, maxFoods: 3 },
+            { spawnInterval: 120, foodLife: 240, maxFoods: 4 },
+            { spawnInterval:  80, foodLife: 180, maxFoods: 5 },
         ],
         C: {
             LIGHT: '#fde047',
@@ -45,22 +46,23 @@
     };
 
     const EscorpiaoGame = {
-        segs:       [],
-        targetX:    0,
-        targetY:    0,
-        animFrame:  null,
-        frameCount: 0,
-        ctx:        null,
-        canvas:     null,
-        _onKey:     null,
-        _onResize:  null,
-        comidas:    [],
-        spawnTimer: 0,
-        faseIdx:    0,
-        score:      0,
-        particulas: [],
-        ac:         null,
-        _bloqueado: false,
+        segs:         [],
+        targetX:      0,
+        targetY:      0,
+        animFrame:    null,
+        frameCount:   0,
+        ctx:          null,
+        canvas:       null,
+        _onKey:       null,
+        _onResize:    null,
+        comidas:      [],
+        spawnTimer:   0,
+        faseIdx:      0,
+        score:        0,
+        missedApples: 0,
+        particulas:   [],
+        ac:           null,
+        _bloqueado:   false,
 
         _getFase() {
             return CONF.FASES[Math.min(this.faseIdx, CONF.FASES.length - 1)];
@@ -69,7 +71,9 @@
         abrir() {
             const cx = window.innerWidth  / 2;
             const cy = window.innerHeight / 2;
-            this.faseIdx = 0;
+            this.faseIdx      = 0;
+            this.score        = 0;
+            this.missedApples = 0;
             this._resetEstado(cx, cy);
 
             // Overlay
@@ -121,27 +125,35 @@
             faseEl.style.cssText = [
                 'position:absolute', 'top:20px', 'left:20px',
                 'font-family:"Russo One",sans-serif',
-                'font-size:0.8rem', 'color:#1e3a5f',
-                'pointer-events:none', 'user-select:none',
-                'transition:color 0.5s',
+                'font-size:0.8rem', 'color:#475569',
+                'pointer-events:none', 'user-select:none', 'z-index:5',
             ].join(';');
-            faseEl.textContent = 'Fase 1';
+            faseEl.textContent = 'Fase 1 / 3';
 
             // Pontuacao (centro superior)
             const scoreEl = document.createElement('div');
             scoreEl.id = 'escorpiao-score';
             scoreEl.style.cssText = [
-                'position:absolute', 'top:16px', 'left:50%',
+                'position:absolute', 'top:12px', 'left:50%',
                 'transform:translateX(-50%)',
                 'font-family:"Russo One",sans-serif',
-                'font-size:1.8rem', 'color:#fde047',
+                'font-size:2rem', 'color:#fde047',
                 'text-shadow:0 0 20px rgba(253,224,71,0.5)',
                 'pointer-events:none', 'user-select:none',
-                'transition:transform 0.1s',
-                'z-index:5',
+                'transition:transform 0.1s', 'z-index:5', 'white-space:nowrap',
             ].join(';');
             scoreEl.textContent = '0';
-            this.score = 0;
+
+            // Contador de macas perdidas (abaixo do score)
+            const missEl = document.createElement('div');
+            missEl.id = 'escorpiao-miss';
+            missEl.style.cssText = [
+                'position:absolute', 'top:52px', 'left:50%',
+                'transform:translateX(-50%)',
+                'display:flex', 'gap:6px', 'align-items:center',
+                'pointer-events:none', 'user-select:none', 'z-index:5',
+            ].join(';');
+            this._buildMissDOM(missEl);
 
             // Label instrucao
             const label = document.createElement('div');
@@ -158,6 +170,7 @@
             overlay.appendChild(closeBtn);
             overlay.appendChild(faseEl);
             overlay.appendChild(scoreEl);
+            overlay.appendChild(missEl);
             overlay.appendChild(label);
             document.body.appendChild(overlay);
 
@@ -166,10 +179,12 @@
             // Toque / clique
             overlay.addEventListener('click', (e) => {
                 if (closeBtn.contains(e.target)) return;
+                if (document.getElementById('escorpiao-fim')) return;
                 EscorpiaoGame._toqueEm(e.clientX, e.clientY);
             });
             overlay.addEventListener('touchstart', (e) => {
                 if (closeBtn.contains(e.target)) return;
+                if (document.getElementById('escorpiao-fim')) return;
                 e.preventDefault();
                 EscorpiaoGame._toqueEm(e.touches[0].clientX, e.touches[0].clientY);
             }, { passive: false });
@@ -213,12 +228,6 @@
             this.spawnTimer = this._getFase().spawnInterval - 80;
             this.particulas = [];
             this._bloqueado = false;
-            // Nao reseta score ao reiniciar (pequenino) — apenas ao abrir
-        },
-
-        _atualizarScoreDOM() {
-            const el = document.getElementById('escorpiao-score');
-            if (el) el.textContent = this.score;
         },
 
         fechar() {
@@ -239,12 +248,9 @@
             if (this._bloqueado) return;
 
             const segs = this.segs;
-
-            // Cabeca segue o alvo com LERP
             segs[0].x += (this.targetX - segs[0].x) * CONF.HEAD_LERP;
             segs[0].y += (this.targetY - segs[0].y) * CONF.HEAD_LERP;
 
-            // Chain following
             for (let i = 1; i < segs.length; i++) {
                 const dx   = segs[i].x - segs[i - 1].x;
                 const dy   = segs[i].y - segs[i - 1].y;
@@ -256,16 +262,22 @@
                 }
             }
 
-            // Comidas: tick, verificar comer, remover expiradas
+            // Comidas: tick, verificar comer, expirar
             for (let i = this.comidas.length - 1; i >= 0; i--) {
                 const c = this.comidas[i];
                 c.t++;
                 c.vida--;
 
                 if (c.vida <= 0) {
-                    // Expirou: poof discreto
                     this._spawnParticulas(c.x, c.y, '#334155', 6);
                     this.comidas.splice(i, 1);
+                    if (c.tipo === 'maca') {
+                        this.missedApples++;
+                        this._atualizarMissDOM();
+                        if (this.missedApples >= CONF.MAX_MISSED) {
+                            this._gameOver('missed');
+                        }
+                    }
                     continue;
                 }
 
@@ -287,12 +299,10 @@
                 this.spawnTimer = 0;
             }
 
-            // Fisica das particulas
+            // Particulas
             this.particulas = this.particulas.filter(p => {
-                p.x  += p.vx;
-                p.y  += p.vy;
-                p.vy += 0.15;
-                p.vx *= 0.93;
+                p.x  += p.vx; p.y  += p.vy;
+                p.vy += 0.15; p.vx *= 0.93;
                 p.vida -= p.decaimento;
                 return p.vida > 0;
             });
@@ -309,7 +319,6 @@
             ctx.fillStyle = CONF.C.BG;
             ctx.fillRect(0, 0, W, H);
 
-            // Grade decorativa
             ctx.fillStyle = CONF.C.GRID;
             for (let x = 21; x < W; x += 42) {
                 for (let y = 21; y < H; y += 42) {
@@ -339,13 +348,11 @@
             const m    = CONF.FOOD_MARGIN;
             const fase = this._getFase();
 
-            // Alternar: se tem muita maca na tela, aumenta chance de brocolis
             const macasNaTela = this.comidas.filter(c => c.tipo === 'maca').length;
-            const probMaca    = macasNaTela >= 2 ? 0.35 : 0.6;
+            const probMaca    = macasNaTela >= 2 ? 0.35 : 0.62;
             const tipo        = Math.random() < probMaca ? 'maca' : 'brocolis';
             const cor         = tipo === 'maca' ? '#ef4444' : '#22c55e';
 
-            // Posicao longe de outras comidas e da cabeca
             let x, y, tentativas = 0, ok = false;
             while (!ok && tentativas < 20) {
                 x  = m + Math.random() * (W - m * 2);
@@ -365,108 +372,216 @@
             this._spawnParticulas(food.x, food.y, food.cor, 24);
             this._somComer(food.tipo);
 
-            // Pontuacao
-            const pts = food.tipo === 'maca' ? 10 : 5;
-            this.score += pts;
-            this._atualizarScoreDOM();
-            this._animarScore();
-
             if (food.tipo === 'maca') {
+                this.score += CONF.POINTS_APPLE;
+                this._atualizarScoreDOM();
+                this._animarScore();
+
                 const tIdx = Math.max(1, this.segs.length - CONF.TAIL_LEN);
                 const ref  = this.segs[tIdx - 1];
                 for (let i = 0; i < CONF.GROW_AMOUNT; i++) {
                     if (this.segs.length < CONF.MAX_SEGS)
                         this.segs.splice(tIdx, 0, { x: ref.x, y: ref.y });
                 }
-                if (this.segs.length >= CONF.MAX_SEGS) this._passarDeFase();
+                // Verificar condicao de vitoria ou avanco de fase
+                if (this.segs.length >= CONF.MAX_SEGS) {
+                    if (this.faseIdx >= CONF.FASES.length - 1) {
+                        this._ganhou();
+                    } else {
+                        this._passarDeFase();
+                    }
+                }
             } else {
+                // Brocolis: perde pontos e encolhe
+                this.score -= CONF.POINTS_LOST_BROC;
+                if (this.score <= 0) {
+                    this.score = 0;
+                    this._atualizarScoreDOM();
+                    this._gameOver('score');
+                    return;
+                }
+                this._atualizarScoreDOM();
+                this._animarScore();
+
                 const tIdx       = Math.max(1, this.segs.length - CONF.TAIL_LEN);
                 const removeFrom = Math.max(1, tIdx - CONF.SHRINK_AMOUNT);
                 const maxRemove  = this.segs.length - CONF.GAMEOVER_SEGS;
                 const count      = Math.min(tIdx - removeFrom, maxRemove);
                 if (count > 0) this.segs.splice(removeFrom, count);
-                if (this.segs.length <= CONF.GAMEOVER_SEGS) this._pequenino();
+                if (this.segs.length <= CONF.GAMEOVER_SEGS) {
+                    this._gameOver('body');
+                }
             }
         },
 
-        _animarScore() {
-            const el = document.getElementById('escorpiao-score');
-            if (!el) return;
-            el.style.transform = 'translateX(-50%) scale(1.4)';
-            setTimeout(() => { el.style.transform = 'translateX(-50%) scale(1)'; }, 150);
-        },
-
-        // ---- Passou de fase ----
+        // ---- Passar de fase ----
         _passarDeFase() {
-            if (this._bloqueado) return; // guard contra double-fire
+            if (this._bloqueado) return;
             this._bloqueado = true;
             this.comidas    = [];
-
-            // Volta ao tamanho inicial para nao travar ao comer na nova fase
             this.segs.splice(CONF.INITIAL_SEGS);
 
-            const anterior = this.faseIdx;
-            this.faseIdx   = Math.min(this.faseIdx + 1, CONF.FASES.length - 1);
+            this.faseIdx++;
+            this.score      += CONF.FASE_BONUS;
+            this.spawnTimer  = this._getFase().spawnInterval - 80;
 
-            // Primeira comida aparece rapido apos a transicao
-            this.spawnTimer = this._getFase().spawnInterval - 80;
+            this._atualizarScoreDOM();
+            this._mostrarMensagem(`Fase ${this.faseIdx + 1}!`, '#fde047');
 
-            const txt = anterior < this.faseIdx
-                ? `Fase ${this.faseIdx + 1}!`
-                : 'Incrivel!';
-            this._mostrarMensagem(txt, '#fde047');
-
-            // Atualizar label de fase no DOM
             const faseEl = document.getElementById('escorpiao-fase');
-            if (faseEl) faseEl.textContent = `Fase ${this.faseIdx + 1}`;
+            if (faseEl) faseEl.textContent = `Fase ${this.faseIdx + 1} / 3`;
 
-            setTimeout(() => {
-                EscorpiaoGame._bloqueado = false;
-            }, 2000);
+            setTimeout(() => { EscorpiaoGame._bloqueado = false; }, 2000);
         },
 
-        // ---- Ficou pequenininho ----
-        _pequenino() {
-            if (this._bloqueado) return; // guard contra double-fire
+        // ---- Vitoria ----
+        _ganhou() {
+            if (this._bloqueado) return;
             this._bloqueado = true;
             this.comidas    = [];
-            this._mostrarMensagem('Pequenininho!', '#60a5fa');
-            setTimeout(() => {
-                if (!EscorpiaoGame.canvas) return;
-                const cx = EscorpiaoGame.canvas.width  / 2;
-                const cy = EscorpiaoGame.canvas.height / 2;
-                EscorpiaoGame._resetEstado(cx, cy);
-            }, 2000);
+            this.score      += CONF.FASE_BONUS;
+            this._atualizarScoreDOM();
+
+            this._mostrarTelaFinal({
+                titulo:    'Parabens Jose Afonso!',
+                subtitulo: 'voce venceu o desafio!',
+                corTitulo: '#fde047',
+                score:     this.score,
+                botoes: [
+                    { texto: 'Jogar Novamente', acao: () => EscorpiaoGame._reiniciarCompleto() },
+                    { texto: 'Outro Jogo',       acao: () => window.fecharJoguinhos ? window.fecharJoguinhos() : EscorpiaoGame.fechar() },
+                ],
+            });
         },
 
-        // ---- Overlay de mensagem temporaria ----
-        _mostrarMensagem(texto, cor) {
+        // ---- Game Over ----
+        _gameOver(motivo) {
+            if (this._bloqueado) return;
+            this._bloqueado = true;
+            this.comidas    = [];
+
+            const motivos = {
+                missed: 'Deixou passar 3 macas!',
+                score:  'Perdeu todos os pontos!',
+                body:   'Ficou pequenininho!',
+            };
+
+            this._mostrarTelaFinal({
+                titulo:    'Fim de Jogo',
+                subtitulo: motivos[motivo] || '',
+                corTitulo: '#ef4444',
+                score:     this.score,
+                botoes: [
+                    { texto: 'Tentar de Novo', acao: () => EscorpiaoGame._reiniciarCompleto() },
+                    { texto: 'Outro Jogo',      acao: () => window.fecharJoguinhos ? window.fecharJoguinhos() : EscorpiaoGame.fechar() },
+                ],
+            });
+        },
+
+        // ---- Reinicio completo ----
+        _reiniciarCompleto() {
+            const fim = document.getElementById('escorpiao-fim');
+            if (fim) fim.remove();
+
+            this.faseIdx      = 0;
+            this.score        = 0;
+            this.missedApples = 0;
+
+            const cx = this.canvas ? this.canvas.width  / 2 : window.innerWidth  / 2;
+            const cy = this.canvas ? this.canvas.height / 2 : window.innerHeight / 2;
+            this._resetEstado(cx, cy);
+
+            const faseEl  = document.getElementById('escorpiao-fase');
+            const missEl  = document.getElementById('escorpiao-miss');
+            if (faseEl)  faseEl.textContent = 'Fase 1 / 3';
+            this._atualizarScoreDOM();
+            if (missEl) this._buildMissDOM(missEl);
+        },
+
+        // ---- Tela final (vitoria ou game over) ----
+        _mostrarTelaFinal({ titulo, subtitulo, corTitulo, score, botoes }) {
             const overlay = document.getElementById('escorpiao-overlay');
             if (!overlay) return;
 
-            // Injeta keyframe se ainda nao existir
-            if (!document.getElementById('escKF')) {
-                const style = document.createElement('style');
-                style.id    = 'escKF';
-                style.textContent = '@keyframes escFadeOut{'
-                    + '0%{opacity:0;transform:scale(0.5)}'
-                    + '20%{opacity:1;transform:scale(1.08)}'
-                    + '80%{opacity:1;transform:scale(1)}'
-                    + '100%{opacity:0;transform:scale(0.8)}'
-                    + '}';
-                document.head.appendChild(style);
+            const fim = document.createElement('div');
+            fim.id = 'escorpiao-fim';
+            fim.style.cssText = [
+                'position:absolute', 'inset:0', 'z-index:30',
+                'display:flex', 'flex-direction:column',
+                'align-items:center', 'justify-content:center',
+                'gap:16px', 'padding:24px',
+                'background:rgba(5,10,20,0.93)',
+                'cursor:auto',
+            ].join(';');
+
+            const mk = (tag, css, txt) => {
+                const el = document.createElement(tag);
+                el.style.cssText = css;
+                if (txt !== undefined) el.textContent = txt;
+                return el;
+            };
+
+            fim.appendChild(mk('div', [
+                'font-family:"Russo One",sans-serif',
+                `font-size:clamp(1.8rem,7vw,3.5rem)`,
+                `color:${corTitulo}`,
+                `text-shadow:0 0 30px ${corTitulo}`,
+                'text-align:center', 'line-height:1.2',
+            ].join(';'), titulo));
+
+            if (subtitulo) {
+                fim.appendChild(mk('div', [
+                    'font-family:Inter,sans-serif',
+                    'font-size:clamp(0.9rem,3vw,1.2rem)',
+                    'color:#94a3b8', 'text-align:center',
+                ].join(';'), subtitulo));
             }
 
+            fim.appendChild(mk('div', [
+                'font-family:"Russo One",sans-serif',
+                'font-size:clamp(1rem,4vw,1.6rem)',
+                'color:#fde047', 'margin-top:8px',
+            ].join(';'), `Pontuacao: ${score}`));
+
+            const btnWrap = document.createElement('div');
+            btnWrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;margin-top:16px;width:min(280px,80vw);';
+
+            botoes.forEach((b, i) => {
+                const btn = document.createElement('button');
+                btn.style.cssText = [
+                    'padding:14px 24px',
+                    'border-radius:12px',
+                    'font-family:"Russo One",sans-serif',
+                    'font-size:1rem',
+                    'cursor:pointer',
+                    'border:none',
+                    'transition:opacity 0.2s',
+                    i === 0
+                        ? 'background:#fde047;color:#0f172a;'
+                        : 'background:#1e293b;color:#94a3b8;border:1px solid #334155;',
+                ].join(';');
+                btn.textContent = b.texto;
+                btn.addEventListener('click', b.acao);
+                btnWrap.appendChild(btn);
+            });
+
+            fim.appendChild(btnWrap);
+            overlay.appendChild(fim);
+        },
+
+        // ---- Mensagem temporaria (transicao de fase) ----
+        _mostrarMensagem(texto, cor) {
+            const overlay = document.getElementById('escorpiao-overlay');
+            if (!overlay) return;
+            if (!document.getElementById('escKF')) {
+                const s = document.createElement('style');
+                s.id = 'escKF';
+                s.textContent = '@keyframes escFadeOut{0%{opacity:0;transform:scale(0.5)}20%{opacity:1;transform:scale(1.08)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0.8)}}';
+                document.head.appendChild(s);
+            }
             const el = document.createElement('div');
-            el.style.cssText = [
-                'position:absolute', 'inset:0', 'z-index:20',
-                'display:flex', 'align-items:center', 'justify-content:center',
-                'pointer-events:none',
-            ].join(';');
-            el.innerHTML = `<span style="font-family:'Russo One',sans-serif;`
-                + `font-size:clamp(2.5rem,10vw,5rem);color:${cor};`
-                + `text-shadow:0 0 40px ${cor};`
-                + `animation:escFadeOut 2s forwards;">${texto}</span>`;
+            el.style.cssText = 'position:absolute;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;pointer-events:none;';
+            el.innerHTML = `<span style="font-family:'Russo One',sans-serif;font-size:clamp(2.5rem,10vw,5rem);color:${cor};text-shadow:0 0 40px ${cor};animation:escFadeOut 2s forwards;">${texto}</span>`;
             overlay.appendChild(el);
             setTimeout(() => el.remove(), 2100);
         },
@@ -481,14 +596,45 @@
             this._somToque();
         },
 
-        // ---- Audio (lazy + resume para mobile) ----
+        // ---- Audio ----
         _initAudio() {
             if (!this.ac) {
                 try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
             }
-            if (this.ac && this.ac.state === 'suspended') {
-                this.ac.resume();
+            if (this.ac && this.ac.state === 'suspended') this.ac.resume();
+        },
+
+        // ---- DOM helpers ----
+        _atualizarScoreDOM() {
+            const el = document.getElementById('escorpiao-score');
+            if (el) el.textContent = this.score;
+        },
+
+        _animarScore() {
+            const el = document.getElementById('escorpiao-score');
+            if (!el) return;
+            el.style.transform = 'translateX(-50%) scale(1.4)';
+            setTimeout(() => { el.style.transform = 'translateX(-50%) scale(1)'; }, 150);
+        },
+
+        _buildMissDOM(container) {
+            container.innerHTML = '';
+            for (let i = 0; i < CONF.MAX_MISSED; i++) {
+                const dot = document.createElement('div');
+                const missed = i < this.missedApples;
+                dot.style.cssText = [
+                    'width:12px', 'height:12px', 'border-radius:50%',
+                    `background:${missed ? '#334155' : '#ef4444'}`,
+                    `box-shadow:${missed ? 'none' : '0 0 6px #ef4444'}`,
+                    'transition:all 0.3s',
+                ].join(';');
+                container.appendChild(dot);
             }
+        },
+
+        _atualizarMissDOM() {
+            const el = document.getElementById('escorpiao-miss');
+            if (el) this._buildMissDOM(el);
         },
 
         // ---- Particulas ----
@@ -501,19 +647,17 @@
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     r: 2.5 + Math.random() * 3.5,
-                    cor,
-                    vida: 1,
+                    cor, vida: 1,
                     decaimento: 0.028 + Math.random() * 0.022,
                 });
             }
         },
 
-        // ---- Desenhar todas as comidas ----
+        // ---- Desenho de comidas ----
         _desenharComidas(ctx) {
             for (const c of this.comidas) {
                 let alpha = 1;
                 if (c.vida < CONF.BLINK_THRESHOLD) {
-                    // Pisca acelerando conforme fica mais proximo de sumir
                     const freq = 0.15 + 0.25 * (1 - c.vida / CONF.BLINK_THRESHOLD);
                     alpha = 0.4 + 0.6 * Math.abs(Math.sin(c.t * freq));
                 }
@@ -528,66 +672,33 @@
             const { x, tipo, cor, t } = food;
             const bob = Math.sin(t * 0.09) * 4;
             const cy  = food.y + bob;
-
             ctx.save();
             ctx.shadowColor = cor;
             ctx.shadowBlur  = 20;
-
             if (tipo === 'maca') {
-                // Corpo
-                ctx.beginPath();
-                ctx.arc(x, cy, 13, 0, Math.PI * 2);
-                ctx.fillStyle = '#ef4444';
-                ctx.fill();
-                // Caule
+                ctx.beginPath(); ctx.arc(x, cy, 13, 0, Math.PI * 2);
+                ctx.fillStyle = '#ef4444'; ctx.fill();
                 ctx.shadowBlur = 0;
-                ctx.beginPath();
-                ctx.moveTo(x + 2, cy - 12);
-                ctx.lineTo(x + 2, cy - 18);
-                ctx.strokeStyle = '#92400e';
-                ctx.lineWidth   = 2.5;
-                ctx.lineCap     = 'round';
-                ctx.stroke();
-                // Folha
-                ctx.beginPath();
-                ctx.ellipse(x + 6, cy - 17, 5, 3, -0.6, 0, Math.PI * 2);
-                ctx.fillStyle = '#16a34a';
-                ctx.fill();
-                // Brilho
-                ctx.beginPath();
-                ctx.arc(x - 4, cy - 5, 4, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255,255,255,0.25)';
-                ctx.fill();
+                ctx.beginPath(); ctx.moveTo(x + 2, cy - 12); ctx.lineTo(x + 2, cy - 18);
+                ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(x + 6, cy - 17, 5, 3, -0.6, 0, Math.PI * 2);
+                ctx.fillStyle = '#16a34a'; ctx.fill();
+                ctx.beginPath(); ctx.arc(x - 4, cy - 5, 4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
             } else {
-                // Cabo
                 ctx.shadowBlur = 0;
-                ctx.beginPath();
-                ctx.moveTo(x, cy + 8);
-                ctx.lineTo(x, cy + 18);
-                ctx.strokeStyle = '#65a30d';
-                ctx.lineWidth   = 3;
-                ctx.lineCap     = 'round';
-                ctx.stroke();
-                // Topo (3 circulos)
-                const tops = [
-                    { dx:  0, dy: -4, r: 9 },
-                    { dx: -7, dy:  2, r: 7 },
-                    { dx:  7, dy:  2, r: 7 },
-                ];
-                ctx.shadowBlur  = 12;
-                ctx.shadowColor = '#22c55e';
+                ctx.beginPath(); ctx.moveTo(x, cy + 8); ctx.lineTo(x, cy + 18);
+                ctx.strokeStyle = '#65a30d'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
+                const tops = [{ dx: 0, dy: -4, r: 9 }, { dx: -7, dy: 2, r: 7 }, { dx: 7, dy: 2, r: 7 }];
+                ctx.shadowBlur = 12; ctx.shadowColor = '#22c55e';
                 for (const tp of tops) {
-                    ctx.beginPath();
-                    ctx.arc(x + tp.dx, cy + tp.dy, tp.r, 0, Math.PI * 2);
-                    ctx.fillStyle = '#22c55e';
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(x + tp.dx, cy + tp.dy, tp.r, 0, Math.PI * 2);
+                    ctx.fillStyle = '#22c55e'; ctx.fill();
                 }
                 ctx.shadowBlur = 0;
                 for (const tp of tops) {
-                    ctx.beginPath();
-                    ctx.arc(x + tp.dx - 2, cy + tp.dy - 2, tp.r * 0.4, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(134,239,172,0.4)';
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(x + tp.dx - 2, cy + tp.dy - 2, tp.r * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(134,239,172,0.4)'; ctx.fill();
                 }
             }
             ctx.restore();
@@ -597,10 +708,8 @@
             ctx.save();
             for (const p of this.particulas) {
                 ctx.globalAlpha = p.vida;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r * p.vida, 0, Math.PI * 2);
-                ctx.fillStyle = p.cor;
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.vida, 0, Math.PI * 2);
+                ctx.fillStyle = p.cor; ctx.fill();
             }
             ctx.globalAlpha = 1;
             ctx.restore();
@@ -650,12 +759,10 @@
             osc.start(); osc.stop(ac.currentTime + 0.2);
         },
 
-        // ---- Helpers de desenho ----
+        // ---- Helpers de desenho do escorpiao ----
         _rg(ctx, cx, cy, r, c0, c1, c2) {
             const g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.08, cx, cy, r);
-            g.addColorStop(0,    c0);
-            g.addColorStop(0.55, c1);
-            g.addColorStop(1,    c2);
+            g.addColorStop(0, c0); g.addColorStop(0.55, c1); g.addColorStop(1, c2);
             return g;
         },
 
@@ -671,24 +778,15 @@
                 ctx.ellipse(s.x, s.y, rx * 1.15, ry, 0, 0, Math.PI * 2);
                 ctx.fillStyle   = this._rg(ctx, s.x, s.y, rx, CONF.C.AMBER, CONF.C.MID, CONF.C.DARK);
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(120,53,15,0.45)';
-                ctx.lineWidth   = 1;
-                ctx.stroke();
+                ctx.strokeStyle = 'rgba(120,53,15,0.45)'; ctx.lineWidth = 1; ctx.stroke();
                 const wiggle = Math.sin(t * 0.10 + i * 0.88) * 9;
                 for (const side of [-1, 1]) {
                     const legTipX = s.x + side * (rx * 1.15 + 13);
                     const legTipY = s.y + wiggle * side * 0.45;
-                    ctx.beginPath();
-                    ctx.moveTo(s.x + side * rx * 0.85, s.y);
-                    ctx.lineTo(legTipX, legTipY);
-                    ctx.strokeStyle = CONF.C.LEG;
-                    ctx.lineWidth   = 1.8;
-                    ctx.lineCap     = 'round';
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.arc(legTipX, legTipY, 2, 0, Math.PI * 2);
-                    ctx.fillStyle = CONF.C.AMBER;
-                    ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(s.x + side * rx * 0.85, s.y); ctx.lineTo(legTipX, legTipY);
+                    ctx.strokeStyle = CONF.C.LEG; ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(legTipX, legTipY, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = CONF.C.AMBER; ctx.fill();
                 }
             }
         },
@@ -704,26 +802,16 @@
                 const r       = _lerp(6, 2.5, prog);
                 const isSting = (i === total - 1);
                 if (isSting) { ctx.shadowColor = 'rgba(253,224,71,0.85)'; ctx.shadowBlur = 14; }
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+                ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
                 ctx.fillStyle = this._rg(ctx, s.x, s.y, r, CONF.C.LIGHT, CONF.C.MID, CONF.C.DARK);
                 ctx.fill();
                 if (isSting && segs.length > 1) {
                     ctx.shadowBlur = 0;
-                    const prev       = segs[i - 1];
-                    const stingAngle = Math.atan2(s.y - prev.y, s.x - prev.x);
+                    const stingAngle = Math.atan2(s.y - segs[i-1].y, s.x - segs[i-1].x);
                     ctx.save();
-                    ctx.translate(s.x, s.y);
-                    ctx.rotate(stingAngle);
-                    ctx.beginPath();
-                    ctx.moveTo(r + 13, 0);
-                    ctx.lineTo(-r, -4.5);
-                    ctx.lineTo(-r,  4.5);
-                    ctx.closePath();
-                    ctx.fillStyle   = CONF.C.LIGHT;
-                    ctx.shadowColor = 'rgba(253,224,71,0.9)';
-                    ctx.shadowBlur  = 12;
-                    ctx.fill();
+                    ctx.translate(s.x, s.y); ctx.rotate(stingAngle);
+                    ctx.beginPath(); ctx.moveTo(r + 13, 0); ctx.lineTo(-r, -4.5); ctx.lineTo(-r, 4.5); ctx.closePath();
+                    ctx.fillStyle = CONF.C.LIGHT; ctx.shadowColor = 'rgba(253,224,71,0.9)'; ctx.shadowBlur = 12; ctx.fill();
                     ctx.restore();
                 }
             }
@@ -733,35 +821,21 @@
         _desenharCabeca(ctx, head, angle, t) {
             const r = 14;
             ctx.save();
-            ctx.translate(head.x, head.y);
-            ctx.rotate(angle);
-            ctx.shadowColor = 'rgba(251,191,36,0.32)';
-            ctx.shadowBlur  = 24;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, r * 1.38, r, 0, 0, Math.PI * 2);
+            ctx.translate(head.x, head.y); ctx.rotate(angle);
+            ctx.shadowColor = 'rgba(251,191,36,0.32)'; ctx.shadowBlur = 24;
+            ctx.beginPath(); ctx.ellipse(0, 0, r * 1.38, r, 0, 0, Math.PI * 2);
             ctx.fillStyle   = this._rg(ctx, 0, 0, r * 1.38, CONF.C.LIGHT, CONF.C.MID, CONF.C.DARK);
             ctx.fill();
-            ctx.strokeStyle = 'rgba(120,53,15,0.48)';
-            ctx.lineWidth   = 1;
-            ctx.stroke();
-            ctx.shadowBlur  = 0;
+            ctx.strokeStyle = 'rgba(120,53,15,0.48)'; ctx.lineWidth = 1; ctx.stroke(); ctx.shadowBlur = 0;
             for (const ey of [-r * 0.38, r * 0.38]) {
-                ctx.beginPath();
-                ctx.arc(r * 0.36, ey, 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = '#0f172a';
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(r * 0.36 + 1.1, ey - 1.1, 1.3, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255,255,255,0.62)';
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(r * 0.36, ey, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#0f172a'; ctx.fill();
+                ctx.beginPath(); ctx.arc(r * 0.36 + 1.1, ey - 1.1, 1.3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.fill();
             }
             const clawWiggle = Math.sin(t * 0.07) * 5;
             for (const side of [-1, 1]) {
-                const bx = r * 1.22, by = side * 5, ex = bx + 14;
-                const spread = side * (7 + clawWiggle * side);
+                const bx = r * 1.22, by = side * 5, ex = bx + 14, spread = side * (7 + clawWiggle * side);
                 ctx.beginPath(); ctx.moveTo(r * 0.9, side * 4); ctx.lineTo(bx, by);
-                ctx.strokeStyle = 'rgba(217,119,6,0.92)'; ctx.lineWidth = 3.5;
-                ctx.lineCap = 'round'; ctx.stroke();
+                ctx.strokeStyle = 'rgba(217,119,6,0.92)'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, by + spread * 0.58);
                 ctx.strokeStyle = CONF.C.AMBER; ctx.lineWidth = 2.5; ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex - 3, by - spread * 0.38);
