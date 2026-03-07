@@ -82,7 +82,8 @@
             id: 'sonic',
             nome: 'Sonic',
             icon: 'speed',
-            cor: 'linear-gradient(135deg,#1d4ed8,#38bdf8)',
+            iconCanvas: true,
+            cor: 'linear-gradient(135deg,#1a3a9e,#0ea5e9)',
             abrir: function () {
                 if (window.SonicGame) window.SonicGame.abrir();
             },
@@ -248,18 +249,71 @@
             var card = document.createElement('button');
             card.className = 'hub-card';
             card.setAttribute('aria-label', jogo.nome);
+
+            var iconInner = jogo.iconCanvas
+                ? '<canvas width="52" height="52" style="display:block;"></canvas>'
+                : '<span class="material-icons">' + jogo.icon + '</span>';
+
             card.innerHTML =
                 '<div class="hub-card-icon" style="background:' + jogo.cor + ';">' +
-                    '<span class="material-icons">' + jogo.icon + '</span>' +
+                    iconInner +
                 '</div>' +
                 '<div class="hub-card-name">' + jogo.nome + '</div>';
 
-            card.addEventListener('click', function () {
-                irParaJogo(jogo);
-            });
+            card.addEventListener('click', function () { irParaJogo(jogo); });
             grid.appendChild(card);
-        });
 
+            if (jogo.iconCanvas) {
+                var cv = card.querySelector('canvas');
+                if (cv) _drawSonicIcon(cv);
+            }
+        });
+    }
+
+    function _drawSonicIcon(cv) {
+        var c = cv.getContext('2d');
+        var W = cv.width, H = cv.height;
+        var cx = W / 2, cy = H / 2;
+        var t = 0;
+
+        function frame() {
+            t++;
+            c.clearRect(0, 0, W, H);
+
+            // Anel girando
+            var spin = (t * 0.05) % (Math.PI * 2);
+            var scaleX = Math.abs(Math.cos(spin)) * 0.5 + 0.5;
+            c.save();
+            c.translate(cx, cy - 2);
+            c.scale(scaleX, 1);
+
+            // Anel dourado
+            c.strokeStyle = '#F8B800'; c.lineWidth = 5;
+            c.beginPath(); c.arc(0, 0, 17, 0, Math.PI * 2); c.stroke();
+            // Brilho interno
+            c.strokeStyle = '#FFE040'; c.lineWidth = 2.5;
+            c.beginPath(); c.arc(-3, -3, 9, Math.PI * 1.2, Math.PI * 2.0); c.stroke();
+            // Ponto de brilho
+            c.fillStyle = '#FFFDE7';
+            c.beginPath(); c.arc(-8, -9, 3.5, 0, Math.PI * 2); c.fill();
+            c.restore();
+
+            // Estrelinhas de velocidade
+            var lines = [[-15, 4, 8], [-13, 9, 5], [-16, 14, 10]];
+            c.strokeStyle = 'rgba(255,255,255,0.60)'; c.lineWidth = 2; c.lineCap = 'round';
+            lines.forEach(function (l) {
+                var pulse = 0.4 + Math.sin(t * 0.12 + l[2]) * 0.6;
+                c.globalAlpha = pulse;
+                c.beginPath();
+                c.moveTo(cx + l[0], cy + l[1]);
+                c.lineTo(cx + l[0] - l[2], cy + l[1]);
+                c.stroke();
+            });
+            c.globalAlpha = 1;
+
+            requestAnimationFrame(frame);
+        }
+        frame();
     }
 
     // ---- Splash: Desenhar rosto do Jose (estilo referencia) ----

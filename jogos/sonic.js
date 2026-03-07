@@ -59,7 +59,13 @@
     // GIF sprites (animados, fundo branco removido por pixel)
     var _gifs = { run: null, jump: null };
     var _gifsReady = false;
-    var _gifCanvas = null, _gifCtx = null;
+
+    // Assets de cenário e inimigos
+    var _bgImg      = null; // fundo.png GHZ
+    var _eggmanImg  = null; // eggman.gif
+
+    // Cache de offscreen canvas por chave (sonic, eggman)
+    var _gifCanvases = {}, _gifCtxs = {};
 
     // Mapa para PNG externo. Formato: [sx, sy, sw, sh, pivX, pivY]
     // Ajuste se o seu spritesheet tiver dimensoes diferentes.
@@ -92,6 +98,40 @@
             img.onerror = onDone;
             img.src = 'assets/sprites/sonic/' + name + '.gif';
         });
+    }
+
+    function initAssets() {
+        _bgImg = new Image();
+        _bgImg.src = 'assets/sprites/sonic/fundo.png';
+        _eggmanImg = new Image();
+        _eggmanImg.src = 'assets/sprites/sonic/eggman.gif';
+    }
+
+    // Renderiza GIF animado removendo fundo branco via mini offscreen canvas.
+    // key: string de cache ('sonic'|'eggman'), targetH: altura alvo em px,
+    // ax: fração horizontal do ponto de ancoragem (0=esq, 0.5=centro)
+    function _renderGif(key, img, targetH, ax) {
+        if (!img || !img.naturalHeight) return;
+        var scale = targetH / img.naturalHeight;
+        var dw = Math.round(img.naturalWidth * scale);
+        var dh = targetH;
+
+        var oc = _gifCanvases[key];
+        var ox = _gifCtxs[key];
+        if (!oc || oc.width !== dw || oc.height !== dh) {
+            oc = _gifCanvases[key] = document.createElement('canvas');
+            oc.width = dw; oc.height = dh;
+            ox = _gifCtxs[key] = oc.getContext('2d');
+        }
+        ox.clearRect(0, 0, dw, dh);
+        ox.drawImage(img, 0, 0, dw, dh);
+        var id = ox.getImageData(0, 0, dw, dh);
+        var d  = id.data;
+        for (var i = 0; i < d.length; i += 4) {
+            if (d[i] > 230 && d[i+1] > 230 && d[i+2] > 230) d[i+3] = 0;
+        }
+        ox.putImageData(id, 0, 0);
+        ctx.drawImage(oc, -(ax || 0.5) * dw, -dh, dw, dh);
     }
 
     // ---- Gerar sprite sheet em offscreen canvas ----
@@ -310,37 +350,10 @@
         ctx.restore();
     }
 
-    // Desenha GIF animado com fundo branco removido via mini offscreen canvas
     function _drawFromGIF() {
         var isSpinning = S.phase === 'jump' || S.phase === 'roll';
         var img = isSpinning ? (_gifs.jump || _gifs.run) : _gifs.run;
-        if (!img || !img.naturalHeight) return;
-
-        var TARGET_H = 90;
-        var scale = TARGET_H / img.naturalHeight;
-        var dw = Math.round(img.naturalWidth * scale);
-        var dh = TARGET_H;
-
-        // Criar/reciclar offscreen canvas do tamanho exato
-        if (!_gifCanvas || _gifCanvas.width !== dw || _gifCanvas.height !== dh) {
-            _gifCanvas = document.createElement('canvas');
-            _gifCanvas.width  = dw;
-            _gifCanvas.height = dh;
-            _gifCtx = _gifCanvas.getContext('2d');
-        }
-        _gifCtx.clearRect(0, 0, dw, dh);
-        _gifCtx.drawImage(img, 0, 0, dw, dh);
-
-        // Remover pixels brancos/quase-brancos (threshold 230)
-        var id = _gifCtx.getImageData(0, 0, dw, dh);
-        var d  = id.data;
-        for (var i = 0; i < d.length; i += 4) {
-            if (d[i] > 230 && d[i+1] > 230 && d[i+2] > 230) d[i+3] = 0;
-        }
-        _gifCtx.putImageData(id, 0, 0);
-
-        // Âncora: pés = (0,0). Horizontal: ~40% da largura é onde ficam os pés
-        ctx.drawImage(_gifCanvas, -dw * 0.40, -dh, dw, dh);
+        _renderGif('sonic', img, 90, 0.40);
     }
 
     function _drawFromGenerated() {
@@ -381,7 +394,7 @@
     var overlay, canvas, ctx, W, H, GY;
     var animFrame = null, ac = null;
     var _kh = null, _th = null, _rh = null;
-    var inputJump = false, inputSD = false;
+    var inputJump = false, inputSD = false, inputJumpHeld = false;
     var sdBtnEl = null;
     var S;
 
@@ -453,11 +466,13 @@
 
     function spawnObstacle() {
         var r = Math.random(), type;
-        if      (r < 0.30) type = 'crabmeat';
-        else if (r < 0.60) type = 'motobug';
-        else if (r < 0.85) type = 'spike';
+        if      (r < 0.22) type = 'crabmeat';
+        else if (r < 0.40) type = 'motobug';
+        else if (r < 0.58) type = 'eggman';
+        else if (r < 0.82) type = 'spike';
         else               type = 'spring';
-        S.obstacles.push({ x: W + 90, y: GY, type: type, t: 0, compressed: 0 });
+        var oy = (type === 'eggman') ? GY - 50 : GY;
+        S.obstacles.push({ x: W + 90, y: oy, type: type, t: 0, compressed: 0 });
     }
 
     function spawnConfetti() {
@@ -512,6 +527,8 @@
         }
 
         if (!S.onGround) {
+            // Pulo variável: soltar cedo = cortar impulso
+            if (!inputJumpHeld && S.phase === 'jump' && S.ysp < -5) S.ysp = -5;
             S.ysp += PHY.GRAVITY; S.y += S.ysp;
             if (S.y >= GY) {
                 S.y = GY; S.ysp = 0; S.onGround = true;
@@ -544,8 +561,10 @@
         S.obstacles = S.obstacles.filter(function (o) {
             o.x -= sp; o.t++;
             if (o.compressed > 0) o.compressed = Math.max(0, o.compressed - 0.09);
-            var dx = Math.abs(o.x - S.x), dy = Math.abs((o.y - 28) - S.y);
-            var isEnemy = o.type === 'crabmeat' || o.type === 'motobug';
+            var bob = (o.type === 'eggman') ? Math.sin(o.t * 0.06) * 12 : 0;
+            var oc_cy = (o.type === 'eggman') ? (o.y + bob - 50) : (o.y - 28);
+            var dx = Math.abs(o.x - S.x), dy = Math.abs(oc_cy - S.y);
+            var isEnemy = o.type === 'crabmeat' || o.type === 'motobug' || o.type === 'eggman';
 
             if (o.type === 'spring') {
                 if (dx < 22 && Math.abs(o.y - 20 - S.y) < 22 && S.ysp >= -1) {
@@ -554,7 +573,8 @@
                 return o.x > -70;
             }
 
-            var hitW = o.type === 'spike' ? 32 : 28, hitH = o.type === 'spike' ? 36 : 40;
+            var hitW = o.type === 'spike' ? 32 : (o.type === 'eggman' ? 45 : 28);
+            var hitH = o.type === 'spike' ? 36 : (o.type === 'eggman' ? 55 : 40);
             if (S.invincible === 0 && S.phase !== 'hurt' && dx < hitW && dy < hitH) {
                 if (isSpinning && isEnemy) {
                     S.ysp = -8; S.onGround = false; S.score += 100; sfxEnemy();
@@ -632,6 +652,11 @@
     // ================================================================
 
     function drawBG() {
+        if (_bgImg && _bgImg.naturalWidth) {
+            _drawBGImage();
+            return;
+        }
+        // Fallback procedural
         var sc = S.scroll;
         var skyG = ctx.createLinearGradient(0,0,0,GY*0.9);
         skyG.addColorStop(0, C.SKY_TOP); skyG.addColorStop(1, C.SKY_BOT);
@@ -645,6 +670,23 @@
         ctx.fillStyle = C.GROUND_G;  ctx.fillRect(0, cb,      W, 15);
         ctx.fillStyle = C.GROUND_DG; ctx.fillRect(0, cb + 15, W, 10);
         ctx.fillStyle = C.GROUND_B;  ctx.fillRect(0, cb + 25, W, H - cb - 25);
+    }
+
+    function _drawBGImage() {
+        var iw = _bgImg.naturalWidth;   // 1022
+        var ih = _bgImg.naturalHeight;  // 498
+        // Escalar para altura total da tela
+        var dh = H;
+        var dw = iw * (H / ih);
+        // Parallax lento (40% da velocidade do foreground)
+        var off = (S.scroll * 0.40) % dw;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(_bgImg, -off,       0, dw, dh);
+        ctx.drawImage(_bgImg, -off + dw,  0, dw, dh);
+        ctx.imageSmoothingEnabled = false;
+        // Estender solo abaixo da imagem
+        ctx.fillStyle = '#7A4010';
+        ctx.fillRect(0, H * 0.90, W, H * 0.10);
     }
 
     function drawClouds(off) {
@@ -706,6 +748,26 @@
             case 'crabmeat': drawCrabmeat(o.t); break;
             case 'motobug':  drawMotobug(o.t);  break;
             case 'spring':   drawSpring(o);      break;
+            case 'eggman':   drawEggman(o);      break;
+        }
+        ctx.restore();
+    }
+
+    function drawEggman(o) {
+        // Bob vertical suave
+        var bob = Math.sin(o.t * 0.06) * 12;
+        ctx.save();
+        ctx.translate(0, bob);
+        if (_eggmanImg && _eggmanImg.naturalWidth) {
+            _renderGif('eggman', _eggmanImg, 100, 0.52);
+        } else {
+            // Fallback simples
+            ctx.fillStyle = '#C02828';
+            ctx.beginPath(); ctx.arc(0, -50, 38, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(10, -52, 10, 8, -0.2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#0A0A0A';
+            ctx.beginPath(); ctx.arc(13, -52, 4, 0, Math.PI*2); ctx.fill();
         }
         ctx.restore();
     }
@@ -828,14 +890,19 @@
     function setupInput() {
         var _ku;
         _kh = function(e) {
-            if (e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W'){e.preventDefault();inputJump=true;}
+            if (e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W'){e.preventDefault();inputJump=true;inputJumpHeld=true;}
             if (e.key==='z'||e.key==='Z'||e.key==='ArrowDown'||e.key==='s'){e.preventDefault();inputSD=true;}
             if (e.key==='Escape'){if(window.fecharJoguinhos)window.fecharJoguinhos();else window.SonicGame.fechar();}
         };
-        _ku = function(e){if(e.key==='z'||e.key==='Z'||e.key==='ArrowDown'||e.key==='s')inputSD=false;};
+        _ku = function(e){
+            if(e.key==='z'||e.key==='Z'||e.key==='ArrowDown'||e.key==='s') inputSD=false;
+            if(e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W') inputJumpHeld=false;
+        };
         window.addEventListener('keydown',_kh); window.addEventListener('keyup',_ku); _kh._up=_ku;
 
-        _th = function(e){e.preventDefault();for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].clientX>W*0.5)inputJump=true;}};
+        _th = function(e){e.preventDefault();for(var i=0;i<e.changedTouches.length;i++){if(e.changedTouches[i].clientX>W*0.5){inputJump=true;inputJumpHeld=true;}}};
+        var _te = function(e){inputJumpHeld=false;};
+        canvas.addEventListener('touchend',_te,{passive:false});
         canvas.addEventListener('touchstart',_th,{passive:false});
         canvas.addEventListener('click',function(e){if(e.clientX>W*0.5)inputJump=true;});
 
@@ -891,6 +958,7 @@
             initState();
             initSprites(); // carrega PNG ou gera sprites
             initGifs();    // carrega GIFs animados (run + jump)
+            initAssets();  // carrega fundo.png + eggman.gif
             createSDBtn();
             setupInput();
             gameLoop();
