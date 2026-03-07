@@ -707,7 +707,7 @@
                 CONF = CONF_LAGARTO;
                 var legCount = _low() ? 2 : 2 + Math.floor(Math.random() * 2);
                 var tailLen = _low() ? 12 : 16 + Math.floor(Math.random() * 4);
-                self.critter = buildLizard(W / 2, H / 2, 4.5, legCount, tailLen);
+                self.critter = buildLizard(W / 2, H / 2, 3.2, legCount, tailLen);
             } else {
                 CONF = CONF_LACRAIA;
                 self.critter = buildCentipede(W / 2, H / 2);
