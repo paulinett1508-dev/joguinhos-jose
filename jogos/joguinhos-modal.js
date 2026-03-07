@@ -68,6 +68,10 @@
         }
     ];
 
+    // Atalhos de performance (window._PERF vem de perf-detect.js)
+    var _P = function () { return window._PERF || {}; };
+    var _low = function () { return _P().low; };
+
     let jogoAtual = null;
     let splashAnimFrame = null;
     let joseAnimFrame = null;
@@ -454,10 +458,11 @@
         var ctx = canvas.getContext('2d');
         var t = 0;
 
-        // Particulas geometricas (triangulos, quadrados, circulos)
+        // Particulas geometricas (reduzidas em low-end)
         var particulas = [];
         var shapes = ['circle', 'triangle', 'square', 'diamond', 'star'];
-        for (var i = 0; i < 35; i++) {
+        var numPart = (_P().splashParticles) || 35;
+        for (var i = 0; i < numPart; i++) {
             particulas.push({
                 x: Math.random() * W,
                 y: Math.random() * H,
@@ -519,35 +524,37 @@
             t++;
             ctx.clearRect(0, 0, W, H);
 
-            // Grid neon sutil no fundo
-            ctx.strokeStyle = 'rgba(139, 92, 246, 0.06)';
-            ctx.lineWidth = 1;
-            var gridSize = 60;
-            var gridOffset = (t * 0.3) % gridSize;
+            // Grid neon sutil no fundo (skip em low-end)
+            if (!_low()) {
+                ctx.strokeStyle = 'rgba(139, 92, 246, 0.06)';
+                ctx.lineWidth = 1;
+                var gridSize = 60;
+                var gridOffset = (t * 0.3) % gridSize;
 
-            // Linhas horizontais
-            for (var gy = -gridSize + gridOffset; gy < H + gridSize; gy += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, gy);
-                ctx.lineTo(W, gy);
-                ctx.stroke();
-            }
-            // Linhas verticais
-            for (var gx = 0; gx < W; gx += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(gx, 0);
-                ctx.lineTo(gx, H);
-                ctx.stroke();
+                for (var gy = -gridSize + gridOffset; gy < H + gridSize; gy += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, gy);
+                    ctx.lineTo(W, gy);
+                    ctx.stroke();
+                }
+                for (var gx = 0; gx < W; gx += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(gx, 0);
+                    ctx.lineTo(gx, H);
+                    ctx.stroke();
+                }
             }
 
-            // Glow central (atras do mascote)
-            var glowPulse = 0.3 + Math.sin(t * 0.02) * 0.1;
-            var centerGlow = ctx.createRadialGradient(W / 2, H * 0.32, 0, W / 2, H * 0.32, Math.min(W, H) * 0.5);
-            centerGlow.addColorStop(0, 'rgba(139, 92, 246, ' + (glowPulse * 0.3) + ')');
-            centerGlow.addColorStop(0.5, 'rgba(168, 85, 247, ' + (glowPulse * 0.15) + ')');
-            centerGlow.addColorStop(1, 'rgba(168, 85, 247, 0)');
-            ctx.fillStyle = centerGlow;
-            ctx.fillRect(0, 0, W, H);
+            // Glow central (atras do mascote) — skip em low-end
+            if (!_low()) {
+                var glowPulse = 0.3 + Math.sin(t * 0.02) * 0.1;
+                var centerGlow = ctx.createRadialGradient(W / 2, H * 0.32, 0, W / 2, H * 0.32, Math.min(W, H) * 0.5);
+                centerGlow.addColorStop(0, 'rgba(139, 92, 246, ' + (glowPulse * 0.3) + ')');
+                centerGlow.addColorStop(0.5, 'rgba(168, 85, 247, ' + (glowPulse * 0.15) + ')');
+                centerGlow.addColorStop(1, 'rgba(168, 85, 247, 0)');
+                ctx.fillStyle = centerGlow;
+                ctx.fillRect(0, 0, W, H);
+            }
 
             // Particulas geometricas flutuando
             particulas.forEach(function (p) {
@@ -571,7 +578,8 @@
                 drawShape(p.x, p.y, p.size, p.shape, p.rotation);
             });
 
-            // Icones de game nos cantos (gamepad silhuetas)
+            // Icones de game nos cantos (skip em low-end)
+            if (_low()) { ctx.globalAlpha = 1; splashAnimFrame = requestAnimationFrame(frame); return; }
             ctx.globalAlpha = 0.08;
 
             // Gamepad canto inferior esquerdo

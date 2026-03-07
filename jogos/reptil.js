@@ -9,6 +9,10 @@
 (function () {
     'use strict';
 
+    // Atalhos de performance (window._PERF vem de perf-detect.js)
+    var _P = function () { return window._PERF || {}; };
+    var _low = function () { return _P().low; };
+
     // ---- Configuracao ----
     var CONF = {
         BG: '#050a14',
@@ -393,7 +397,9 @@
         if (!this.audioCtx || velocidade < 0.5) return;
 
         var now = Date.now();
-        if (now - this.lastSoundTime < this.soundInterval) return;
+        // Intervalo maior em low-end para evitar criacao excessiva de buffers
+        var interval = _low() ? 200 : this.soundInterval;
+        if (now - this.lastSoundTime < interval) return;
         this.lastSoundTime = now;
 
         var ctx = this.audioCtx;
@@ -465,10 +471,10 @@
             self.mouseX = W / 2;
             self.mouseY = H / 2;
 
-            // Gerar lagarto aleatorio (tamanho moderado, cauda longa e bonita)
-            var legCount = 2 + Math.floor(Math.random() * 2); // 2-3 pares
+            // Gerar lagarto aleatorio (reduzido em low-end)
+            var legCount = _low() ? 2 : 2 + Math.floor(Math.random() * 2); // 2 pares em low-end
             var sizeScale = 4 / Math.sqrt(legCount);
-            var tailLen = 10 + Math.floor(Math.random() * 6); // cauda longa e elegante
+            var tailLen = _low() ? 8 : 10 + Math.floor(Math.random() * 6);
             self.critter = buildLizard(W / 2, H / 2, sizeScale, legCount, tailLen);
 
             // Inicializar som
@@ -627,10 +633,11 @@
             ctx.fillStyle = CONF.BG;
             ctx.fillRect(0, 0, W, H);
 
-            // Grade decorativa
+            // Grade decorativa (passo maior em low-end)
+            var gs = (_P().gridStep) || 42;
             ctx.fillStyle = CONF.GRID;
-            for (var x = 21; x < W; x += 42) {
-                for (var y = 21; y < H; y += 42) {
+            for (var x = 21; x < W; x += gs) {
+                for (var y = 21; y < H; y += gs) {
                     ctx.beginPath();
                     ctx.arc(x, y, 1.2, 0, Math.PI * 2);
                     ctx.fill();
@@ -650,9 +657,11 @@
             ctx.lineWidth = CONF.LINE_W;
             ctx.lineCap = 'round';
 
-            // Glow sutil
-            ctx.shadowColor = CONF.GLOW;
-            ctx.shadowBlur = 6;
+            // Glow sutil (desligado em low-end)
+            if (!_low()) {
+                ctx.shadowColor = CONF.GLOW;
+                ctx.shadowBlur = 6;
+            }
 
             this.critter.draw(ctx, true);
 

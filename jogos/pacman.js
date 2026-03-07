@@ -1110,8 +1110,7 @@
                     if (tile === 1) {
                         // Parede
                         ctx.fillStyle = CONF.WALL;
-                        ctx.shadowColor = CONF.WALL_GLOW;
-                        ctx.shadowBlur = 4;
+                        if (!(window._PERF && window._PERF.low)) { ctx.shadowColor = CONF.WALL_GLOW; ctx.shadowBlur = 4; }
                         ctx.fillRect(px + 2, py + 2, cell - 4, cell - 4);
                         ctx.shadowBlur = 0;
                     } else if (tile === 2) {
@@ -1232,8 +1231,7 @@
             if (pac.dir.x === 0 && pac.dir.y === 0) angle = 0;
 
             ctx.fillStyle = CONF.PACMAN;
-            ctx.shadowColor = CONF.PACMAN;
-            ctx.shadowBlur = 8;
+            if (!(window._PERF && window._PERF.low)) { ctx.shadowColor = CONF.PACMAN; ctx.shadowBlur = 8; }
             ctx.beginPath();
             ctx.arc(px, py, cell / 2 - 2,
                 angle + pac.mouthAngle + 0.1,

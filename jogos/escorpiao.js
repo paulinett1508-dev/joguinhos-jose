@@ -12,6 +12,10 @@
 
     function _lerp(a, b, t) { return a + (b - a) * t; }
 
+    // Atalhos de performance (window._PERF vem de perf-detect.js)
+    var _P = function () { return window._PERF || {}; };
+    var _low = function () { return _P().low; };
+
     const CONF = {
         BODY_START:          1,
         TAIL_LEN:            6,
@@ -322,9 +326,10 @@
             ctx.fillStyle = CONF.C.BG;
             ctx.fillRect(0, 0, W, H);
 
+            var gs = (_P().gridStep) || 42;
             ctx.fillStyle = CONF.C.GRID;
-            for (let x = 21; x < W; x += 42) {
-                for (let y = 21; y < H; y += 42) {
+            for (let x = 21; x < W; x += gs) {
+                for (let y = 21; y < H; y += gs) {
                     ctx.beginPath();
                     ctx.arc(x, y, 1.2, 0, Math.PI * 2);
                     ctx.fill();
@@ -696,6 +701,8 @@
 
         // ---- Particulas ----
         _spawnParticulas(x, y, cor, qtd) {
+            var scale = (_P().particleScale) || 1;
+            qtd = Math.ceil(qtd * scale);
             for (let i = 0; i < qtd; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 const speed = 2 + Math.random() * 5;
@@ -729,13 +736,13 @@
             const { x, tipo, cor, t } = food;
             const bob = Math.sin(t * 0.09) * 4;
             const cy  = food.y + bob;
+            var useShadow = !_low();
             ctx.save();
-            ctx.shadowColor = cor;
-            ctx.shadowBlur  = 20;
+            if (useShadow) { ctx.shadowColor = cor; ctx.shadowBlur = 20; }
             if (tipo === 'maca') {
                 ctx.beginPath(); ctx.arc(x, cy, 13, 0, Math.PI * 2);
                 ctx.fillStyle = '#ef4444'; ctx.fill();
-                ctx.shadowBlur = 0;
+                if (useShadow) ctx.shadowBlur = 0;
                 ctx.beginPath(); ctx.moveTo(x + 2, cy - 12); ctx.lineTo(x + 2, cy - 18);
                 ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke();
                 ctx.beginPath(); ctx.ellipse(x + 6, cy - 17, 5, 3, -0.6, 0, Math.PI * 2);
@@ -743,16 +750,16 @@
                 ctx.beginPath(); ctx.arc(x - 4, cy - 5, 4, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
             } else {
-                ctx.shadowBlur = 0;
+                if (useShadow) ctx.shadowBlur = 0;
                 ctx.beginPath(); ctx.moveTo(x, cy + 8); ctx.lineTo(x, cy + 18);
                 ctx.strokeStyle = '#65a30d'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
                 const tops = [{ dx: 0, dy: -4, r: 9 }, { dx: -7, dy: 2, r: 7 }, { dx: 7, dy: 2, r: 7 }];
-                ctx.shadowBlur = 12; ctx.shadowColor = '#22c55e';
+                if (useShadow) { ctx.shadowBlur = 12; ctx.shadowColor = '#22c55e'; }
                 for (const tp of tops) {
                     ctx.beginPath(); ctx.arc(x + tp.dx, cy + tp.dy, tp.r, 0, Math.PI * 2);
                     ctx.fillStyle = '#22c55e'; ctx.fill();
                 }
-                ctx.shadowBlur = 0;
+                if (useShadow) ctx.shadowBlur = 0;
                 for (const tp of tops) {
                     ctx.beginPath(); ctx.arc(x + tp.dx - 2, cy + tp.dy - 2, tp.r * 0.4, 0, Math.PI * 2);
                     ctx.fillStyle = 'rgba(134,239,172,0.4)'; ctx.fill();
@@ -826,6 +833,7 @@
         _desenharCorpo(ctx, segs, t) {
             const tailStart = Math.max(1, segs.length - CONF.TAIL_LEN);
             const bodyLen   = tailStart - CONF.BODY_START;
+            var useGrad = !_low();
             for (let i = CONF.BODY_START; i < tailStart; i++) {
                 const s    = segs[i];
                 const prog = bodyLen > 1 ? (i - CONF.BODY_START) / (bodyLen - 1) : 0;
@@ -833,7 +841,7 @@
                 const ry   = _lerp(9.5, 6,   prog);
                 ctx.beginPath();
                 ctx.ellipse(s.x, s.y, rx * 1.15, ry, 0, 0, Math.PI * 2);
-                ctx.fillStyle   = this._rg(ctx, s.x, s.y, rx, CONF.C.AMBER, CONF.C.MID, CONF.C.DARK);
+                ctx.fillStyle = useGrad ? this._rg(ctx, s.x, s.y, rx, CONF.C.AMBER, CONF.C.MID, CONF.C.DARK) : CONF.C.MID;
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(120,53,15,0.45)'; ctx.lineWidth = 1; ctx.stroke();
                 const wiggle = Math.sin(t * 0.10 + i * 0.88) * 9;
@@ -852,23 +860,27 @@
             const tailStart = Math.max(1, segs.length - CONF.TAIL_LEN);
             const total     = segs.length;
             const tailLen   = total - tailStart;
+            var useShadow = !_low();
+            var useGrad   = !_low();
             ctx.save();
             for (let i = tailStart; i < total; i++) {
                 const s       = segs[i];
                 const prog    = tailLen > 1 ? (i - tailStart) / (tailLen - 1) : 0;
                 const r       = _lerp(6, 2.5, prog);
                 const isSting = (i === total - 1);
-                if (isSting) { ctx.shadowColor = 'rgba(253,224,71,0.85)'; ctx.shadowBlur = 14; }
+                if (isSting && useShadow) { ctx.shadowColor = 'rgba(253,224,71,0.85)'; ctx.shadowBlur = 14; }
                 ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-                ctx.fillStyle = this._rg(ctx, s.x, s.y, r, CONF.C.LIGHT, CONF.C.MID, CONF.C.DARK);
+                ctx.fillStyle = useGrad ? this._rg(ctx, s.x, s.y, r, CONF.C.LIGHT, CONF.C.MID, CONF.C.DARK) : CONF.C.MID;
                 ctx.fill();
                 if (isSting && segs.length > 1) {
-                    ctx.shadowBlur = 0;
+                    if (useShadow) ctx.shadowBlur = 0;
                     const stingAngle = Math.atan2(s.y - segs[i-1].y, s.x - segs[i-1].x);
                     ctx.save();
                     ctx.translate(s.x, s.y); ctx.rotate(stingAngle);
                     ctx.beginPath(); ctx.moveTo(r + 13, 0); ctx.lineTo(-r, -4.5); ctx.lineTo(-r, 4.5); ctx.closePath();
-                    ctx.fillStyle = CONF.C.LIGHT; ctx.shadowColor = 'rgba(253,224,71,0.9)'; ctx.shadowBlur = 12; ctx.fill();
+                    ctx.fillStyle = CONF.C.LIGHT;
+                    if (useShadow) { ctx.shadowColor = 'rgba(253,224,71,0.9)'; ctx.shadowBlur = 12; }
+                    ctx.fill();
                     ctx.restore();
                 }
             }
@@ -877,13 +889,16 @@
 
         _desenharCabeca(ctx, head, angle, t) {
             const r = 14;
+            var useShadow = !_low();
+            var useGrad   = !_low();
             ctx.save();
             ctx.translate(head.x, head.y); ctx.rotate(angle);
-            ctx.shadowColor = 'rgba(251,191,36,0.32)'; ctx.shadowBlur = 24;
+            if (useShadow) { ctx.shadowColor = 'rgba(251,191,36,0.32)'; ctx.shadowBlur = 24; }
             ctx.beginPath(); ctx.ellipse(0, 0, r * 1.38, r, 0, 0, Math.PI * 2);
-            ctx.fillStyle   = this._rg(ctx, 0, 0, r * 1.38, CONF.C.LIGHT, CONF.C.MID, CONF.C.DARK);
+            ctx.fillStyle = useGrad ? this._rg(ctx, 0, 0, r * 1.38, CONF.C.LIGHT, CONF.C.MID, CONF.C.DARK) : CONF.C.MID;
             ctx.fill();
-            ctx.strokeStyle = 'rgba(120,53,15,0.48)'; ctx.lineWidth = 1; ctx.stroke(); ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(120,53,15,0.48)'; ctx.lineWidth = 1; ctx.stroke();
+            if (useShadow) ctx.shadowBlur = 0;
             for (const ey of [-r * 0.38, r * 0.38]) {
                 ctx.beginPath(); ctx.arc(r * 0.36, ey, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#0f172a'; ctx.fill();
                 ctx.beginPath(); ctx.arc(r * 0.36 + 1.1, ey - 1.1, 1.3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.fill();
