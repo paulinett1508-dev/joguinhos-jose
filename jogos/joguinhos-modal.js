@@ -253,12 +253,12 @@
         var H = canvas.height;
         var t = 0;
 
-        // Paleta de cores (estilo da imagem de referencia)
+        // Paleta de cores
         var skin = '#f5dfc5';
         var skinDark = '#e8c9a8';
-        var hairBlue = '#6b8fad';
-        var hairLight = '#8ba8bf';
-        var hairDark = '#4a6d87';
+        var hairColor = '#1a1a1a';
+        var hairLight = '#3a3a3a';
+        var hairDark = '#0a0a0a';
 
         function frame() {
             t++;
@@ -317,7 +317,7 @@
 
             curls.forEach(function(c, i) {
                 var wobble = Math.sin(t * 0.02 + i * 0.4) * 1.5;
-                ctx.fillStyle = hairBlue;
+                ctx.fillStyle = hairColor;
                 ctx.beginPath();
                 ctx.arc(cx + c.x + wobble, cy + c.y + bounce, c.r, 0, Math.PI * 2);
                 ctx.fill();
