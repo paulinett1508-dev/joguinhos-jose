@@ -100,73 +100,72 @@
             height: 100%;
         }
 
-        /* Logo estilo arcade */
+        /* Logo estilo da referencia */
         .splash-title {
             position: relative;
             z-index: 2;
             text-align: center;
+            margin-bottom: 8px;
         }
 
         .splash-title h1 {
             font-family: var(--font-title);
-            font-size: 1.6rem;
-            color: var(--text-secondary);
-            text-shadow: 0 0 20px rgba(129,140,248,0.3);
-            line-height: 1.1;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-
-        .splash-title h1 span {
-            display: block;
-            font-size: 3.5rem;
-            background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: none;
-            filter: drop-shadow(0 4px 0 #92400e) drop-shadow(0 0 30px rgba(251, 191, 36, 0.5));
-            letter-spacing: 0.08em;
-            animation: logo-pulse 2s ease-in-out infinite;
+            font-size: 3rem;
+            color: #ffffff;
+            line-height: 1.15;
+            letter-spacing: 0.02em;
+            text-shadow:
+                3px 3px 0 #7c3aed,
+                -1px -1px 0 #7c3aed,
+                1px -1px 0 #7c3aed,
+                -1px 1px 0 #7c3aed,
+                0 4px 0 #5b21b6,
+                0 0 30px rgba(139, 92, 246, 0.6);
+            font-style: italic;
         }
 
         @keyframes logo-pulse {
-            0%, 100% { filter: drop-shadow(0 4px 0 #92400e) drop-shadow(0 0 30px rgba(251, 191, 36, 0.5)); }
-            50% { filter: drop-shadow(0 4px 0 #92400e) drop-shadow(0 0 50px rgba(251, 191, 36, 0.8)); }
+            0%, 100% { text-shadow: 3px 3px 0 #7c3aed, -1px -1px 0 #7c3aed, 1px -1px 0 #7c3aed, -1px 1px 0 #7c3aed, 0 4px 0 #5b21b6, 0 0 30px rgba(139, 92, 246, 0.6); }
+            50% { text-shadow: 3px 3px 0 #7c3aed, -1px -1px 0 #7c3aed, 1px -1px 0 #7c3aed, -1px 1px 0 #7c3aed, 0 4px 0 #5b21b6, 0 0 50px rgba(139, 92, 246, 0.9); }
+        }
+
+        .splash-title h1 {
+            animation: logo-pulse 2s ease-in-out infinite;
         }
 
         .splash-subtitle {
             position: relative;
             z-index: 2;
-            color: var(--accent-purple);
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
+            color: #e2e8f0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            font-style: italic;
+            letter-spacing: 0.05em;
+            margin-top: -5px;
+            margin-bottom: 20px;
         }
 
         .btn-jogar {
             position: relative;
             z-index: 2;
-            background: linear-gradient(180deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+            background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
             color: white;
             border: none;
-            padding: 22px 64px;
-            border-radius: 16px;
+            padding: 18px 48px;
+            border-radius: 50px;
             font-family: var(--font-title);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             cursor: pointer;
             transition: all 0.15s;
             display: inline-flex;
             align-items: center;
-            gap: 14px;
-            min-height: 72px;
+            gap: 10px;
+            min-height: 64px;
             box-shadow:
-                0 6px 0 #166534,
-                0 10px 30px rgba(34, 197, 94, 0.4),
+                0 4px 0 #5b21b6,
+                0 8px 25px rgba(139, 92, 246, 0.5),
                 inset 0 2px 0 rgba(255,255,255,0.2);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             overflow: hidden;
         }
@@ -188,10 +187,10 @@
         }
 
         .btn-jogar:hover {
-            transform: translateY(-4px);
+            transform: translateY(-3px);
             box-shadow:
-                0 10px 0 #166534,
-                0 16px 40px rgba(34, 197, 94, 0.5),
+                0 7px 0 #5b21b6,
+                0 12px 35px rgba(139, 92, 246, 0.6),
                 inset 0 2px 0 rgba(255,255,255,0.2);
         }
 
@@ -411,16 +410,13 @@
         </div>
 
         <div class="splash-title">
-            <h1>
-                Joguinhos do
-                <span>José</span>
-            </h1>
+            <h1>Joguinhos<br>do Jose</h1>
         </div>
 
-        <p class="splash-subtitle">Press Start!</p>
+        <p class="splash-subtitle">Diversão para crianças</p>
 
         <button class="btn-jogar" id="btn-jogar" aria-label="Jogar">
-            <span class="material-icons" style="font-size:28px;">play_arrow</span>
+            <span class="material-icons" style="font-size:24px;">play_arrow</span>
             Jogar
         </button>
     </div>
@@ -454,6 +450,6 @@
     <script src="jogos/escorpiao.js?v=4"></script>
     <script src="jogos/reptil.js?v=3"></script>
     <script src="jogos/pacman.js?v=6"></script>
-    <script src="jogos/joguinhos-modal.js?v=5"></script>
+    <script src="jogos/joguinhos-modal.js?v=6"></script>
 </body>
 </html>

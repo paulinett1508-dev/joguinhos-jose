@@ -243,7 +243,7 @@
         }
     }
 
-    // ---- Splash: Desenhar rosto do Jose (estilo fofo) ----
+    // ---- Splash: Desenhar rosto do Jose (estilo referencia) ----
 
     function desenharJose() {
         var canvas = document.getElementById('jose-canvas');
@@ -253,137 +253,167 @@
         var H = canvas.height;
         var t = 0;
 
-        // Paleta de cores
-        var skin = '#e8c4a0';
-        var skinDark = '#d4a88a';
-        var hairBlue = '#2d7fc1';
-        var hairLight = '#4a9ee0';
-        var hairDark = '#1a5a8c';
+        // Paleta de cores (estilo da imagem de referencia)
+        var skin = '#f5dfc5';
+        var skinDark = '#e8c9a8';
+        var hairBlue = '#6b8fad';
+        var hairLight = '#8ba8bf';
+        var hairDark = '#4a6d87';
 
         function frame() {
             t++;
             ctx.clearRect(0, 0, W, H);
 
             var cx = W / 2;
-            var cy = H / 2 + 5;
-            var bounce = Math.sin(t * 0.04) * 2;
+            var cy = H / 2 + 10;
+            var bounce = Math.sin(t * 0.04) * 1.5;
 
             ctx.save();
 
             // Leve rotacao divertida
             ctx.translate(cx, cy);
-            ctx.rotate(Math.sin(t * 0.02) * 0.03);
+            ctx.rotate(Math.sin(t * 0.02) * 0.02);
             ctx.translate(-cx, -cy);
 
             // ===== ORELHAS =====
             ctx.fillStyle = skin;
             ctx.beginPath();
-            ctx.ellipse(cx - 50, cy + 8 + bounce, 10, 14, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx - 52, cy + 5 + bounce, 12, 16, -0.2, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(cx + 50, cy + 8 + bounce, 10, 14, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx + 52, cy + 5 + bounce, 12, 16, 0.2, 0, Math.PI * 2);
             ctx.fill();
 
             // ===== ROSTO =====
+            // Sombra sutil
             ctx.fillStyle = skinDark;
             ctx.beginPath();
-            ctx.arc(cx, cy + 4 + bounce, 48, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy + 6 + bounce, 52, 48, 0, 0, Math.PI * 2);
             ctx.fill();
+            // Rosto principal
             ctx.fillStyle = skin;
             ctx.beginPath();
-            ctx.arc(cx, cy + bounce, 47, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy + bounce, 50, 46, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // ===== CABELO AZUL =====
+            // ===== CABELO AZUL (mais volumoso) =====
+            // Base do cabelo
             ctx.fillStyle = hairDark;
             ctx.beginPath();
-            ctx.arc(cx, cy - 15 + bounce, 50, Math.PI, 0);
+            ctx.arc(cx, cy - 10 + bounce, 55, Math.PI, 0);
             ctx.fill();
 
-            // Cachinhos
+            // Cachinhos maiores e mais organicos
             var curls = [
-                { x: 0, y: -60, r: 16 },
-                { x: -20, y: -55, r: 15 }, { x: 20, y: -55, r: 15 },
-                { x: -38, y: -45, r: 14 }, { x: 38, y: -45, r: 14 },
-                { x: -12, y: -62, r: 12 }, { x: 12, y: -62, r: 12 },
-                { x: -30, y: -52, r: 13 }, { x: 30, y: -52, r: 13 },
-                { x: -45, y: -32, r: 12 }, { x: 45, y: -32, r: 12 },
-                { x: 0, y: -68, r: 11 }
+                { x: 0, y: -62, r: 18 },
+                { x: -22, y: -58, r: 17 }, { x: 22, y: -58, r: 17 },
+                { x: -42, y: -45, r: 16 }, { x: 42, y: -45, r: 16 },
+                { x: -10, y: -68, r: 14 }, { x: 10, y: -68, r: 14 },
+                { x: -32, y: -55, r: 15 }, { x: 32, y: -55, r: 15 },
+                { x: -50, y: -30, r: 14 }, { x: 50, y: -30, r: 14 },
+                { x: 0, y: -72, r: 12 },
+                { x: -55, y: -15, r: 12 }, { x: 55, y: -15, r: 12 }
             ];
 
             curls.forEach(function(c, i) {
-                var wobble = Math.sin(t * 0.025 + i * 0.5) * 2;
+                var wobble = Math.sin(t * 0.02 + i * 0.4) * 1.5;
                 ctx.fillStyle = hairBlue;
                 ctx.beginPath();
                 ctx.arc(cx + c.x + wobble, cy + c.y + bounce, c.r, 0, Math.PI * 2);
                 ctx.fill();
+                // Brilho no cabelo
                 ctx.fillStyle = hairLight;
                 ctx.beginPath();
-                ctx.arc(cx + c.x + wobble - 3, cy + c.y + bounce - 4, c.r * 0.35, 0, Math.PI * 2);
+                ctx.arc(cx + c.x + wobble - 4, cy + c.y + bounce - 5, c.r * 0.3, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // ===== OLHOS SIMPLES E FOFOS =====
-            var blink = (t % 180 < 8) ? 0.1 : 1;
-            var eyeY = cy + 2 + bounce;
-            var eyeSpacing = 18;
+            // ===== OLHOS GRANDES E EXPRESSIVOS =====
+            var blink = (t % 200 < 8) ? 0.1 : 1;
+            var eyeY = cy + bounce;
+            var eyeSpacing = 22;
 
-            // Olhos pretos simples
-            ctx.fillStyle = '#222';
+            // Branco dos olhos
+            ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.ellipse(cx - eyeSpacing, eyeY, 8, 9 * blink, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx - eyeSpacing, eyeY, 14, 16 * blink, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(cx + eyeSpacing, eyeY, 8, 9 * blink, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx + eyeSpacing, eyeY, 14, 16 * blink, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Brilhos
+            // Iris (marrom escuro)
             if (blink > 0.5) {
-                ctx.fillStyle = '#fff';
+                ctx.fillStyle = '#3d2314';
                 ctx.beginPath();
-                ctx.arc(cx - eyeSpacing + 3, eyeY - 3, 3.5, 0, Math.PI * 2);
+                ctx.ellipse(cx - eyeSpacing + 2, eyeY + 2, 9, 10, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(cx + eyeSpacing + 3, eyeY - 3, 3.5, 0, Math.PI * 2);
+                ctx.ellipse(cx + eyeSpacing + 2, eyeY + 2, 9, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupila
+                ctx.fillStyle = '#1a0f0a';
+                ctx.beginPath();
+                ctx.arc(cx - eyeSpacing + 2, eyeY + 3, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + eyeSpacing + 2, eyeY + 3, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Brilhos grandes
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(cx - eyeSpacing + 5, eyeY - 2, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + eyeSpacing + 5, eyeY - 2, 4, 0, Math.PI * 2);
+                ctx.fill();
+                // Brilhos pequenos
+                ctx.beginPath();
+                ctx.arc(cx - eyeSpacing - 1, eyeY + 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + eyeSpacing - 1, eyeY + 5, 2, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // ===== SOBRANCELHAS =====
+            // ===== SOBRANCELHAS SUAVES =====
             ctx.strokeStyle = hairDark;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(cx - 28, cy - 12 + bounce);
-            ctx.quadraticCurveTo(cx - 18, cy - 18 + bounce, cx - 10, cy - 14 + bounce);
+            ctx.moveTo(cx - 34, cy - 18 + bounce);
+            ctx.quadraticCurveTo(cx - 22, cy - 24 + bounce, cx - 10, cy - 20 + bounce);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(cx + 10, cy - 14 + bounce);
-            ctx.quadraticCurveTo(cx + 18, cy - 18 + bounce, cx + 28, cy - 12 + bounce);
+            ctx.moveTo(cx + 10, cy - 20 + bounce);
+            ctx.quadraticCurveTo(cx + 22, cy - 24 + bounce, cx + 34, cy - 18 + bounce);
             ctx.stroke();
 
-            // ===== NARIZ =====
+            // ===== NARIZ PEQUENO =====
             ctx.fillStyle = skinDark;
             ctx.beginPath();
-            ctx.ellipse(cx, cy + 18 + bounce, 5, 4, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy + 18 + bounce, 4, 3, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // ===== BOCHECHAS =====
-            ctx.fillStyle = 'rgba(255, 130, 130, 0.4)';
+            // ===== BOCHECHAS ROSADAS =====
+            ctx.fillStyle = 'rgba(255, 160, 140, 0.35)';
             ctx.beginPath();
-            ctx.ellipse(cx - 32, cy + 16 + bounce, 11, 7, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx - 36, cy + 18 + bounce, 12, 8, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(cx + 32, cy + 16 + bounce, 11, 7, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ===== SORRISO SIMPLES E ALEGRE =====
-            // Boca (arco simples)
-            ctx.fillStyle = '#a04040';
-            ctx.beginPath();
-            ctx.arc(cx, cy + 32 + bounce, 16, 0.1, Math.PI - 0.1);
+            ctx.ellipse(cx + 36, cy + 18 + bounce, 12, 8, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Dentes (arco branco simples)
+            // ===== SORRISO FELIZ =====
+            // Boca aberta
+            ctx.fillStyle = '#c45c5c';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + 32 + bounce, 18, 12, 0, 0, Math.PI);
+            ctx.fill();
+
+            // Dentes superiores
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(cx, cy + 32 + bounce, 14, 0.15, Math.PI - 0.15);
