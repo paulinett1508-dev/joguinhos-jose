@@ -142,7 +142,7 @@
         }
     }
 
-    // ---- Splash: Desenhar rosto do Jose (baseado na foto real) ----
+    // ---- Splash: Desenhar rosto do Jose (estilo fofo) ----
 
     function desenharJose() {
         var canvas = document.getElementById('jose-canvas');
@@ -152,254 +152,149 @@
         var H = canvas.height;
         var t = 0;
 
-        // Cores baseadas na foto
-        var skinBase = '#d4a574';
-        var skinShadow = '#b8956a';
-        var skinHighlight = '#e8c4a0';
-        var hairBlue = '#1e6091';
-        var hairBlueLight = '#3b82c4';
-        var hairBlueDark = '#0f4c75';
+        // Paleta de cores
+        var skin = '#e8c4a0';
+        var skinDark = '#d4a88a';
+        var hairBlue = '#2d7fc1';
+        var hairLight = '#4a9ee0';
+        var hairDark = '#1a5a8c';
 
         function frame() {
             t++;
             ctx.clearRect(0, 0, W, H);
 
             var cx = W / 2;
-            var cy = H / 2 + 8;
+            var cy = H / 2 + 5;
             var bounce = Math.sin(t * 0.04) * 2;
-            var tilt = Math.sin(t * 0.025) * 1.5;
 
             ctx.save();
+
+            // Leve rotacao divertida
             ctx.translate(cx, cy);
-            ctx.rotate(tilt * Math.PI / 180);
+            ctx.rotate(Math.sin(t * 0.02) * 0.03);
             ctx.translate(-cx, -cy);
 
-            // Glow azul atras do cabelo
-            var hairGlow = ctx.createRadialGradient(cx, cy - 40, 20, cx, cy - 40, 70);
-            hairGlow.addColorStop(0, 'rgba(59, 130, 196, 0.3)');
-            hairGlow.addColorStop(1, 'rgba(59, 130, 196, 0)');
-            ctx.fillStyle = hairGlow;
+            // ===== ORELHAS =====
+            ctx.fillStyle = skin;
             ctx.beginPath();
-            ctx.arc(cx, cy - 40, 70, 0, Math.PI * 2);
+            ctx.ellipse(cx - 50, cy + 8 + bounce, 10, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(cx + 50, cy + 8 + bounce, 10, 14, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Orelhas
-            ctx.fillStyle = skinBase;
+            // ===== ROSTO =====
+            ctx.fillStyle = skinDark;
             ctx.beginPath();
-            ctx.ellipse(cx - 48, cy + 10 + bounce, 8, 12, -0.1, 0, Math.PI * 2);
+            ctx.arc(cx, cy + 4 + bounce, 48, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = skin;
             ctx.beginPath();
-            ctx.ellipse(cx + 48, cy + 10 + bounce, 8, 12, 0.1, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = skinShadow;
-            ctx.beginPath();
-            ctx.ellipse(cx - 48, cy + 12 + bounce, 4, 6, -0.1, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(cx + 48, cy + 12 + bounce, 4, 6, 0.1, 0, Math.PI * 2);
+            ctx.arc(cx, cy + bounce, 47, 0, Math.PI * 2);
             ctx.fill();
 
-            // Cabeca - rosto redondo de crianca
-            ctx.fillStyle = skinShadow;
+            // ===== CABELO AZUL =====
+            ctx.fillStyle = hairDark;
             ctx.beginPath();
-            ctx.ellipse(cx, cy + 4 + bounce, 45, 50, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = skinBase;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + bounce, 44, 49, 0, 0, Math.PI * 2);
+            ctx.arc(cx, cy - 15 + bounce, 50, Math.PI, 0);
             ctx.fill();
 
-            // Highlight nas bochechas
-            var cheekGlow = ctx.createRadialGradient(cx - 25, cy + 15 + bounce, 0, cx - 25, cy + 15 + bounce, 20);
-            cheekGlow.addColorStop(0, skinHighlight);
-            cheekGlow.addColorStop(1, 'rgba(232, 196, 160, 0)');
-            ctx.fillStyle = cheekGlow;
-            ctx.beginPath();
-            ctx.arc(cx - 25, cy + 15 + bounce, 20, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(cx + 25, cy + 15 + bounce, 20, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Cabelo azul - base volumosa cacheada
-            ctx.fillStyle = hairBlueDark;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - 22 + bounce, 48, 40, 0, Math.PI, Math.PI * 2);
-            ctx.fill();
-
-            // Cachos azuis (curtos e volumosos como na foto)
+            // Cachinhos
             var curls = [
-                { x: 0, y: -58, r: 14 },
-                { x: -18, y: -55, r: 13 }, { x: 18, y: -55, r: 13 },
-                { x: -32, y: -48, r: 12 }, { x: 32, y: -48, r: 12 },
-                { x: -42, y: -35, r: 10 }, { x: 42, y: -35, r: 10 },
-                { x: -10, y: -60, r: 11 }, { x: 10, y: -60, r: 11 },
-                { x: -25, y: -58, r: 10 }, { x: 25, y: -58, r: 10 },
-                { x: -38, y: -42, r: 11 }, { x: 38, y: -42, r: 11 },
-                { x: 0, y: -65, r: 10 }
+                { x: 0, y: -60, r: 16 },
+                { x: -20, y: -55, r: 15 }, { x: 20, y: -55, r: 15 },
+                { x: -38, y: -45, r: 14 }, { x: 38, y: -45, r: 14 },
+                { x: -12, y: -62, r: 12 }, { x: 12, y: -62, r: 12 },
+                { x: -30, y: -52, r: 13 }, { x: 30, y: -52, r: 13 },
+                { x: -45, y: -32, r: 12 }, { x: 45, y: -32, r: 12 },
+                { x: 0, y: -68, r: 11 }
             ];
+
             curls.forEach(function(c, i) {
-                var wobble = Math.sin(t * 0.03 + i * 0.6) * 1.5;
-                // Sombra
-                ctx.fillStyle = hairBlueDark;
-                ctx.beginPath();
-                ctx.arc(cx + c.x + wobble, cy + c.y + bounce + 2, c.r, 0, Math.PI * 2);
-                ctx.fill();
-                // Cacho principal
+                var wobble = Math.sin(t * 0.025 + i * 0.5) * 2;
                 ctx.fillStyle = hairBlue;
                 ctx.beginPath();
                 ctx.arc(cx + c.x + wobble, cy + c.y + bounce, c.r, 0, Math.PI * 2);
                 ctx.fill();
-                // Highlight
-                ctx.fillStyle = hairBlueLight;
+                ctx.fillStyle = hairLight;
                 ctx.beginPath();
-                ctx.arc(cx + c.x + wobble - 2, cy + c.y + bounce - 3, c.r * 0.4, 0, Math.PI * 2);
+                ctx.arc(cx + c.x + wobble - 3, cy + c.y + bounce - 4, c.r * 0.35, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // Linha do cabelo na testa
-            ctx.fillStyle = hairBlue;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - 28 + bounce, 40, 18, 0, Math.PI, Math.PI * 2);
-            ctx.fill();
-
-            // Sobrancelhas naturais escuras
-            ctx.strokeStyle = '#3d2314';
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(cx - 26, cy - 12 + bounce);
-            ctx.quadraticCurveTo(cx - 18, cy - 16 + bounce, cx - 10, cy - 12 + bounce);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(cx + 10, cy - 12 + bounce);
-            ctx.quadraticCurveTo(cx + 18, cy - 16 + bounce, cx + 26, cy - 12 + bounce);
-            ctx.stroke();
-
-            // Olhos - formato amendoado como na foto
-            var blink = (t % 200 < 8) ? 0.15 : 1;
+            // ===== OLHOS SIMPLES E FOFOS =====
+            var blink = (t % 180 < 8) ? 0.1 : 1;
             var eyeY = cy + 2 + bounce;
+            var eyeSpacing = 18;
 
-            // Branco dos olhos
-            ctx.fillStyle = '#fefefe';
+            // Olhos pretos simples
+            ctx.fillStyle = '#222';
             ctx.beginPath();
-            ctx.ellipse(cx - 16, eyeY, 9, 10 * blink, 0.1, 0, Math.PI * 2);
+            ctx.ellipse(cx - eyeSpacing, eyeY, 8, 9 * blink, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(cx + 16, eyeY, 9, 10 * blink, -0.1, 0, Math.PI * 2);
+            ctx.ellipse(cx + eyeSpacing, eyeY, 8, 9 * blink, 0, 0, Math.PI * 2);
             ctx.fill();
 
+            // Brilhos
             if (blink > 0.5) {
-                var lookX = Math.sin(t * 0.018) * 2;
-
-                // Iris castanho escuro
-                ctx.fillStyle = '#2d1810';
-                ctx.beginPath();
-                ctx.arc(cx - 16 + lookX, eyeY + 1, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(cx + 16 + lookX, eyeY + 1, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupila
-                ctx.fillStyle = '#0a0a0a';
-                ctx.beginPath();
-                ctx.arc(cx - 16 + lookX, eyeY + 1, 3.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(cx + 16 + lookX, eyeY + 1, 3.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Brilho nos olhos
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(cx - 14 + lookX, eyeY - 1, 2, 0, Math.PI * 2);
+                ctx.arc(cx - eyeSpacing + 3, eyeY - 3, 3.5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(cx + 18 + lookX, eyeY - 1, 2, 0, Math.PI * 2);
+                ctx.arc(cx + eyeSpacing + 3, eyeY - 3, 3.5, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // Palpebras superiores sutis
-            ctx.strokeStyle = '#5c4030';
-            ctx.lineWidth = 1.5;
+            // ===== SOBRANCELHAS =====
+            ctx.strokeStyle = hairDark;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.arc(cx - 16, eyeY - 1, 9, Math.PI + 0.4, -0.4);
+            ctx.moveTo(cx - 28, cy - 12 + bounce);
+            ctx.quadraticCurveTo(cx - 18, cy - 18 + bounce, cx - 10, cy - 14 + bounce);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(cx + 16, eyeY - 1, 9, Math.PI + 0.4, -0.4);
+            ctx.moveTo(cx + 10, cy - 14 + bounce);
+            ctx.quadraticCurveTo(cx + 18, cy - 18 + bounce, cx + 28, cy - 12 + bounce);
             ctx.stroke();
 
-            // Nariz - pequeno e arredondado
-            ctx.fillStyle = skinShadow;
+            // ===== NARIZ =====
+            ctx.fillStyle = skinDark;
             ctx.beginPath();
             ctx.ellipse(cx, cy + 18 + bounce, 5, 4, 0, 0, Math.PI * 2);
             ctx.fill();
-            // Narinas sutis
-            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+
+            // ===== BOCHECHAS =====
+            ctx.fillStyle = 'rgba(255, 130, 130, 0.4)';
             ctx.beginPath();
-            ctx.ellipse(cx - 3, cy + 19 + bounce, 2, 1.5, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx - 32, cy + 16 + bounce, 11, 7, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(cx + 3, cy + 19 + bounce, 2, 1.5, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx + 32, cy + 16 + bounce, 11, 7, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Bochechas rosadas
-            ctx.fillStyle = 'rgba(205, 92, 92, 0.2)';
+            // ===== SORRISO SIMPLES E ALEGRE =====
+            // Boca (arco simples)
+            ctx.fillStyle = '#a04040';
             ctx.beginPath();
-            ctx.ellipse(cx - 30, cy + 18 + bounce, 10, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(cx + 30, cy + 18 + bounce, 10, 6, 0, 0, Math.PI * 2);
+            ctx.arc(cx, cy + 32 + bounce, 16, 0.1, Math.PI - 0.1);
             ctx.fill();
 
-            // SORRISO GRANDE - caracteristica principal!
-            // Labios
-            ctx.fillStyle = '#c4736c';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 32 + bounce, 20, 12, 0, 0, Math.PI);
-            ctx.fill();
-
-            // Interior da boca (escuro)
-            ctx.fillStyle = '#4a1c1c';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 34 + bounce, 17, 9, 0, 0, Math.PI);
-            ctx.fill();
-
-            // Dentes superiores
+            // Dentes (arco branco simples)
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.roundRect(cx - 14, cy + 28 + bounce, 28, 10, 2);
+            ctx.arc(cx, cy + 32 + bounce, 14, 0.15, Math.PI - 0.15);
+            ctx.lineTo(cx - 13, cy + 32 + bounce);
             ctx.fill();
 
-            // Linhas entre os dentes
-            ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-            ctx.lineWidth = 0.5;
-            for (var d = -10; d <= 10; d += 5) {
-                ctx.beginPath();
-                ctx.moveTo(cx + d, cy + 28 + bounce);
-                ctx.lineTo(cx + d, cy + 37 + bounce);
-                ctx.stroke();
-            }
-
-            // Labio superior
-            ctx.strokeStyle = '#a85a55';
-            ctx.lineWidth = 2;
+            // Contorno do sorriso
+            ctx.strokeStyle = '#803030';
+            ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(cx - 18, cy + 28 + bounce);
-            ctx.quadraticCurveTo(cx - 8, cy + 25 + bounce, cx, cy + 27 + bounce);
-            ctx.quadraticCurveTo(cx + 8, cy + 25 + bounce, cx + 18, cy + 28 + bounce);
-            ctx.stroke();
-
-            // Covinhas
-            ctx.strokeStyle = skinShadow;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(cx - 25, cy + 28 + bounce, 3, 0.3, 1.8);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx + 25, cy + 28 + bounce, 3, 1.3, 2.8);
+            ctx.arc(cx, cy + 32 + bounce, 16, 0.1, Math.PI - 0.1);
             ctx.stroke();
 
             ctx.restore();

@@ -67,8 +67,8 @@
 
         /* ---- SPLASH ---- */
         #tela-splash {
-            background: linear-gradient(180deg, #0f172a 0%, #1a1040 50%, #0f172a 100%);
-            gap: 24px;
+            background: linear-gradient(180deg, #0c0a1d 0%, #1a0a2e 30%, #0f172a 70%, #0c1222 100%);
+            gap: 20px;
             padding: 32px 24px;
             overflow: hidden;
         }
@@ -86,12 +86,13 @@
             height: 100%;
         }
 
-        /* Garotinho animado */
+        /* Mascote Jose - rosto grande */
         .splash-jose {
             position: relative;
             z-index: 2;
-            width: 120px;
-            height: 120px;
+            width: 180px;
+            height: 180px;
+            filter: drop-shadow(0 0 25px rgba(59, 130, 196, 0.4));
         }
 
         .splash-jose canvas {
@@ -99,6 +100,7 @@
             height: 100%;
         }
 
+        /* Logo estilo arcade */
         .splash-title {
             position: relative;
             z-index: 2;
@@ -107,61 +109,98 @@
 
         .splash-title h1 {
             font-family: var(--font-title);
-            font-size: 2rem;
-            color: var(--text-primary);
-            text-shadow: 0 0 30px rgba(129,140,248,0.4);
-            line-height: 1.2;
+            font-size: 1.6rem;
+            color: var(--text-secondary);
+            text-shadow: 0 0 20px rgba(129,140,248,0.3);
+            line-height: 1.1;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
         .splash-title h1 span {
             display: block;
-            font-size: 2.6rem;
-            background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
+            font-size: 3.5rem;
+            background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-shadow: none;
+            filter: drop-shadow(0 4px 0 #92400e) drop-shadow(0 0 30px rgba(251, 191, 36, 0.5));
+            letter-spacing: 0.08em;
+            animation: logo-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes logo-pulse {
+            0%, 100% { filter: drop-shadow(0 4px 0 #92400e) drop-shadow(0 0 30px rgba(251, 191, 36, 0.5)); }
+            50% { filter: drop-shadow(0 4px 0 #92400e) drop-shadow(0 0 50px rgba(251, 191, 36, 0.8)); }
         }
 
         .splash-subtitle {
             position: relative;
             z-index: 2;
-            color: var(--text-muted);
-            font-size: 0.85rem;
+            color: var(--accent-purple);
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
         }
 
         .btn-jogar {
             position: relative;
             z-index: 2;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: linear-gradient(180deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
             color: white;
             border: none;
-            padding: 20px 56px;
-            border-radius: var(--radius-md);
+            padding: 22px 64px;
+            border-radius: 16px;
             font-family: var(--font-title);
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            min-height: 64px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35);
-            animation: pulse-btn 2s infinite;
+            gap: 14px;
+            min-height: 72px;
+            box-shadow:
+                0 6px 0 #166534,
+                0 10px 30px rgba(34, 197, 94, 0.4),
+                inset 0 2px 0 rgba(255,255,255,0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .btn-jogar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: btn-shine 2.5s infinite;
+        }
+
+        @keyframes btn-shine {
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
         }
 
         .btn-jogar:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.5);
+            transform: translateY(-4px);
+            box-shadow:
+                0 10px 0 #166534,
+                0 16px 40px rgba(34, 197, 94, 0.5),
+                inset 0 2px 0 rgba(255,255,255,0.2);
         }
 
         .btn-jogar:active {
-            transform: translateY(0) scale(0.97);
-            animation: none;
-        }
-
-        @keyframes pulse-btn {
-            0%, 100% { box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35); }
-            50% { box-shadow: 0 8px 40px rgba(99, 102, 241, 0.55); }
+            transform: translateY(2px);
+            box-shadow:
+                0 2px 0 #166534,
+                0 4px 20px rgba(34, 197, 94, 0.4),
+                inset 0 2px 0 rgba(255,255,255,0.2);
         }
 
         /* ---- HUB ---- */
@@ -320,23 +359,43 @@
             padding: 60px 20px 20px;
         }
 
-        /* Bounce animation for splash elements */
-        @keyframes bounce-in {
-            0% { opacity: 0; transform: scale(0.3); }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
+        /* Animacoes epicas de entrada */
+        @keyframes slam-in {
+            0% { opacity: 0; transform: scale(2) translateY(-50px); }
+            60% { opacity: 1; transform: scale(0.9) translateY(5px); }
+            80% { transform: scale(1.05) translateY(-2px); }
+            100% { transform: scale(1) translateY(0); }
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+        @keyframes slide-up {
+            0% { opacity: 0; transform: translateY(40px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
-        .splash-jose { animation: bounce-in 0.6s ease-out, float 3s ease-in-out 0.6s infinite; }
-        .splash-title { animation: bounce-in 0.6s ease-out 0.15s both; }
-        .splash-subtitle { animation: bounce-in 0.4s ease-out 0.3s both; }
-        .btn-jogar { animation: bounce-in 0.5s ease-out 0.45s both, pulse-btn 2s 1s infinite; }
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+            70% { transform: scale(1.1) rotate(2deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes float-rotate {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { filter: drop-shadow(0 0 25px rgba(59, 130, 196, 0.4)); }
+            50% { filter: drop-shadow(0 0 45px rgba(59, 130, 196, 0.7)); }
+        }
+
+        .splash-jose {
+            animation: slam-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+                       float-rotate 4s ease-in-out 0.7s infinite,
+                       glow-pulse 3s ease-in-out 0.7s infinite;
+        }
+        .splash-title { animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both; }
+        .splash-subtitle { animation: slide-up 0.5s ease-out 0.4s both; }
+        .btn-jogar { animation: slide-up 0.5s ease-out 0.5s both; }
     </style>
 </head>
 <body>
@@ -348,17 +407,17 @@
         </div>
 
         <div class="splash-jose">
-            <canvas id="jose-canvas" width="120" height="120"></canvas>
+            <canvas id="jose-canvas" width="180" height="180"></canvas>
         </div>
 
         <div class="splash-title">
             <h1>
                 Joguinhos do
-                <span>Jose</span>
+                <span>José</span>
             </h1>
         </div>
 
-        <p class="splash-subtitle">Diversao para criancas</p>
+        <p class="splash-subtitle">Press Start!</p>
 
         <button class="btn-jogar" id="btn-jogar" aria-label="Jogar">
             <span class="material-icons" style="font-size:28px;">play_arrow</span>
@@ -391,9 +450,9 @@
     </div>
 
     <!-- Scripts dos jogos -->
-    <script src="jogos/penaltis.js"></script>
-    <script src="jogos/escorpiao.js"></script>
-    <script src="jogos/reptil.js"></script>
-    <script src="jogos/joguinhos-modal.js"></script>
+    <script src="jogos/penaltis.js?v=2"></script>
+    <script src="jogos/escorpiao.js?v=2"></script>
+    <script src="jogos/reptil.js?v=2"></script>
+    <script src="jogos/joguinhos-modal.js?v=2"></script>
 </body>
 </html>

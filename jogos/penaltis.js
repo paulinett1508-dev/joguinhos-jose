@@ -1,9 +1,8 @@
 // =====================================================================
-// penaltis.js — Jogo de Penaltis Standalone v1.0
+// penaltis.js — Jogo de Penaltis Standalone v1.1
 // =====================================================================
-// Extraido de SuperCartolaManagerv5 (manutencao-screen.js)
 // Canvas 360x240, controles mouse/touch + teclado
-// Modos: Cobrador (striker) e Goleiro (keeper)
+// Modo: Cobrar penaltis - clique no canto do gol para chutar!
 // 4 niveis de dificuldade
 // =====================================================================
 
@@ -33,7 +32,8 @@
             }
             this._container = containerEl;
             this._container.style.display = 'block';
-            this._mostrarSelecaoModo();
+            this._gameMode = 'striker';
+            this._mostrarSelecaoDificuldade();
         },
 
         fechar() {
@@ -44,57 +44,16 @@
             }
         },
 
-        // ---- Selecao de Modo ----
-
-        _mostrarSelecaoModo() {
-            if (!this._container) return;
-
-            this._container.innerHTML = `
-                <div style="text-align:center;margin-bottom:16px;">
-                    <h3 style="font-family:'Russo One',sans-serif;font-size:1.1rem;color:#34d399;margin:0 0 8px;">
-                        <span class="material-icons" style="vertical-align:middle;font-size:22px;">sports_soccer</span>
-                        Jogo de Penaltis
-                    </h3>
-                    <p style="font-size:0.75rem;color:#9ca3af;margin:0;">
-                        Escolha seu modo de jogo
-                    </p>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:12px;max-width:320px;margin:0 auto;">
-                    <button id="btnModoStriker" style="background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;padding:16px;border-radius:12px;font-family:'Russo One',sans-serif;font-size:0.95rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;">
-                        <span class="material-icons" style="font-size:24px;">sports_soccer</span>
-                        <span>COBRAR PENALTIS</span>
-                    </button>
-                    <button id="btnModoKeeper" style="background:linear-gradient(135deg,#f97316,#ea580c);color:white;border:none;padding:16px;border-radius:12px;font-family:'Russo One',sans-serif;font-size:0.95rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;">
-                        <span class="material-icons" style="font-size:24px;">sports_handball</span>
-                        <span>SER GOLEIRO</span>
-                    </button>
-                </div>
-            `;
-
-            document.getElementById('btnModoStriker')?.addEventListener('click', () => {
-                this._gameMode = 'striker';
-                this._mostrarSelecaoDificuldade();
-            });
-
-            document.getElementById('btnModoKeeper')?.addEventListener('click', () => {
-                this._gameMode = 'keeper';
-                this._mostrarSelecaoDificuldade();
-            });
-        },
-
         // ---- Selecao de Dificuldade ----
 
         _mostrarSelecaoDificuldade() {
             if (!this._container) return;
 
-            const modoTexto = this._gameMode === 'striker' ? 'Cobrar Penaltis' : 'Ser Goleiro';
-            const modoIcon = this._gameMode === 'striker' ? 'sports_soccer' : 'sports_handball';
-
             this._container.innerHTML = `
                 <div style="text-align:center;margin-bottom:16px;">
                     <h3 style="font-family:'Russo One',sans-serif;font-size:1.1rem;color:#34d399;margin:0 0 4px;">
-                        <span class="material-icons" style="vertical-align:middle;font-size:22px;">${modoIcon}</span>
-                        ${modoTexto}
+                        <span class="material-icons" style="vertical-align:middle;font-size:22px;">sports_soccer</span>
+                        Cobrar Penaltis
                     </h3>
                     <p style="font-size:0.75rem;color:#9ca3af;margin:0;">
                         Escolha a dificuldade
@@ -118,17 +77,7 @@
                         <span style="font-size:0.7rem;opacity:0.8;">Goleiro expert</span>
                     </button>
                 </div>
-                <div style="text-align:center;margin-top:16px;">
-                    <button id="btnVoltarModo"
-                        style="background:none;border:none;color:#6b7280;font-size:0.75rem;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;">
-                        <span class="material-icons" style="vertical-align:middle;font-size:14px;">arrow_back</span> Voltar
-                    </button>
-                </div>
             `;
-
-            document.getElementById('btnVoltarModo')?.addEventListener('click', () => {
-                this._mostrarSelecaoModo();
-            });
 
             this._container.querySelectorAll('.btnDificuldade').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -164,28 +113,26 @@
         _iniciarJogo() {
             if (!this._container) return;
 
-            const modoTexto = this._gameMode === 'striker' ? 'Cobrar Penaltis' : 'Defender Penaltis';
-            const modoIcon = this._gameMode === 'striker' ? 'sports_soccer' : 'sports_handball';
             const diffTexto = { easy: 'Facil', medium: 'Medio', hard: 'Dificil', veryhard: 'Muito Dificil' };
 
             this._container.innerHTML = `
                 <div style="text-align:center;margin-bottom:12px;">
                     <h3 style="font-family:'Russo One',sans-serif;font-size:1rem;color:#34d399;margin:0 0 4px;">
-                        <span class="material-icons" style="vertical-align:middle;font-size:20px;">${modoIcon}</span>
-                        ${modoTexto}
+                        <span class="material-icons" style="vertical-align:middle;font-size:20px;">sports_soccer</span>
+                        Cobrar Penaltis
                     </h3>
                     <p style="font-size:0.7rem;color:#9ca3af;margin:0;">
-                        ${diffTexto[this._gameDifficulty]} | ${this._gameMode === 'striker' ? 'Clique na zona do gol' : 'Defenda o penalti!'}
+                        ${diffTexto[this._gameDifficulty]} | Clique no canto do gol
                     </p>
                 </div>
                 <canvas id="penaltyCanvas" width="360" height="240"
                     style="display:block;margin:0 auto;background:#0f172a;border-radius:12px;border:1px solid #374151;max-width:100%;touch-action:none;"></canvas>
                 <div id="penaltyScore" style="text-align:center;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:#fbbf24;">
-                    ${this._gameMode === 'striker' ? 'Gols: 0' : 'Defesas: 0'} | ${this._gameMode === 'striker' ? 'Cobranca' : 'Penalti'} 1
+                    Gols: 0 | Cobranca 1
                 </div>
                 <div style="text-align:center;margin-top:6px;font-size:0.68rem;color:#6b7280;font-family:'Inter',sans-serif;">
-                    <span class="material-icons" style="vertical-align:middle;font-size:14px;">lightbulb</span>
-                    Use teclado: Q/W/E (altura) + A/S/D (canto) ou clique no gol
+                    <span class="material-icons" style="vertical-align:middle;font-size:14px;">touch_app</span>
+                    Toque no canto do gol para chutar!
                 </div>
                 <div style="text-align:center;margin-top:6px;">
                     <button id="btnVoltarDificuldade"
@@ -260,8 +207,6 @@
             let keeperY = kBaseY;
             let frame = 0;
 
-            const gameMode = this._gameMode || 'striker';
-
             const getAccuracy = () => {
                 const progress = cobradas / totalCobradas;
                 return currentDiff.baseAccuracy + (currentDiff.maxAccuracy - currentDiff.baseAccuracy) * progress;
@@ -301,35 +246,6 @@
                 state = 'shooting';
             };
 
-            const aiShoot = () => {
-                if (state !== 'aiming') return;
-
-                const allZones = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-                let preferredZones = allZones;
-                if (this._gameDifficulty === 'hard' || this._gameDifficulty === 'veryhard') {
-                    preferredZones = allZones.filter(z => z !== 4);
-                }
-
-                chosenZone = preferredZones[Math.floor(Math.random() * preferredZones.length)];
-                const coords = zoneToCoords(chosenZone);
-                chosenHeight = coords.row;
-                chosenSide = coords.col;
-
-                ballAnim = { sx: ballStartX, sy: ballStartY, tx: coords.x, ty: coords.y, p: 0, height: coords.row };
-                keeperZone = -1;
-                state = 'ai_shooting';
-            };
-
-            const defend = (zone) => {
-                if (state !== 'ai_shooting') return;
-                keeperZone = zone;
-                const kCoords = zoneToCoords(zone);
-                const kTargetX = kCoords.x - kW / 2;
-                const kTargetY = kCoords.row === 2 ? kBaseY - 15 : (kCoords.row === 1 ? kBaseY - 5 : kBaseY + 5);
-                keeperAnim = { sx: keeperX, sy: keeperY, tx: kTargetX, ty: kTargetY, p: 0 };
-                state = 'defending';
-            };
-
             // Input
             const getCanvasPos = (e) => {
                 const rect = canvas.getBoundingClientRect();
@@ -352,9 +268,6 @@
                     keeperX = kBaseX;
                     keeperY = kBaseY;
                     hoverZone = -1;
-                    if (gameMode === 'keeper') {
-                        setTimeout(() => { if (state === 'aiming') aiShoot(); }, 800);
-                    }
                     return;
                 }
 
@@ -363,10 +276,8 @@
                     const row = Math.min(2, Math.max(0, Math.floor((goalB - pos.y) / zoneH)));
                     const zone = row * 3 + col;
 
-                    if (gameMode === 'striker' && state === 'aiming') {
+                    if (state === 'aiming') {
                         shoot(zone);
-                    } else if (gameMode === 'keeper' && state === 'ai_shooting') {
-                        defend(zone);
                     }
                 }
             };
@@ -374,7 +285,7 @@
             canvas.addEventListener('click', handleClick);
             canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleClick(e); });
             canvas.addEventListener('mousemove', (e) => {
-                if ((gameMode === 'striker' && state !== 'aiming') || (gameMode === 'keeper' && state !== 'ai_shooting')) {
+                if (state !== 'aiming') {
                     hoverZone = -1;
                     return;
                 }
@@ -393,15 +304,10 @@
                     'z': 0, 'x': 1, 'c': 2
                 };
 
-                if (gameMode === 'striker' && state === 'aiming') {
+                if (state === 'aiming') {
                     if (keyMap[e.key.toLowerCase()] !== undefined) {
                         e.preventDefault();
                         shoot(keyMap[e.key.toLowerCase()]);
-                    }
-                } else if (gameMode === 'keeper' && state === 'ai_shooting') {
-                    if (keyMap[e.key.toLowerCase()] !== undefined) {
-                        e.preventDefault();
-                        defend(keyMap[e.key.toLowerCase()]);
                     }
                 } else if (state === 'result' || state === 'gameover') {
                     if (e.code === 'Space' || e.key === ' ') {
@@ -413,9 +319,6 @@
                             keeperX = kBaseX;
                             keeperY = kBaseY;
                             hoverZone = -1;
-                            if (gameMode === 'keeper') {
-                                setTimeout(() => { if (state === 'aiming') aiShoot(); }, 800);
-                            }
                         }
                     }
                 }
@@ -520,11 +423,6 @@
                 ctx.beginPath(); ctx.arc(x, y, r * 0.35, 0, Math.PI * 2); ctx.fill();
             };
 
-            // Keeper mode: AI starts shooting after delay
-            if (gameMode === 'keeper') {
-                setTimeout(() => { if (state === 'aiming') aiShoot(); }, 1200);
-            }
-
             // Game loop
             const loop = () => {
                 frame++;
@@ -547,11 +445,11 @@
                 drawGoal();
 
                 // Keeper
-                if (state === 'shooting' || state === 'defending' || state === 'result') {
+                if (state === 'shooting' || state === 'result') {
                     keeperAnim.p = Math.min(1, keeperAnim.p + 0.07);
                     const kx = keeperAnim.sx + (keeperAnim.tx - keeperAnim.sx) * keeperAnim.p;
                     drawKeeper(kx, kBaseY, keeperAnim.p > 0.2);
-                } else if (state === 'aiming' || state === 'ai_shooting') {
+                } else if (state === 'aiming') {
                     const sway = Math.sin(frame * 0.05) * 3;
                     drawKeeper(kBaseX + sway, kBaseY, false);
                 }
@@ -570,20 +468,7 @@
                     ctx.fillText('<', goalL + zoneW * 0.5, goalB + 14);
                     ctx.fillText('^', goalL + zoneW * 1.5, goalB + 14);
                     ctx.fillText('>', goalL + zoneW * 2.5, goalB + 14);
-                } else if (state === 'ai_shooting') {
-                    // Ball animating toward goal (AI shooting)
-                    ballAnim.p = Math.min(1, ballAnim.p + 0.045);
-                    const bx = ballAnim.sx + (ballAnim.tx - ballAnim.sx) * ballAnim.p;
-                    const arc = Math.sin(ballAnim.p * Math.PI) * 30;
-                    const by = ballAnim.sy + (ballAnim.ty - ballAnim.sy) * ballAnim.p - arc;
-                    const br = ballR * (1 - ballAnim.p * 0.35);
-                    drawBall(bx, by, br);
-
-                    ctx.fillStyle = '#fbbf24';
-                    ctx.font = "bold 11px 'Russo One', sans-serif";
-                    ctx.textAlign = 'center';
-                    ctx.fillText('DEFENDA! Clique no canto!', W / 2, H - 8);
-                } else if (state === 'shooting' || state === 'defending') {
+                } else if (state === 'shooting') {
                     ballAnim.p = Math.min(1, ballAnim.p + 0.055);
                     const bx = ballAnim.sx + (ballAnim.tx - ballAnim.sx) * ballAnim.p;
                     const arc = Math.sin(ballAnim.p * Math.PI) * 30;
@@ -594,22 +479,12 @@
 
                     if (ballAnim.p >= 1) {
                         cobradas++;
-                        if (gameMode === 'striker') {
-                            if (chosenZone === keeperZone && Math.random() < 0.65) {
-                                resultado = 'DEFESA!';
-                                defesas++;
-                            } else {
-                                resultado = 'GOOOL!';
-                                gols++;
-                            }
+                        if (chosenZone === keeperZone && Math.random() < 0.65) {
+                            resultado = 'DEFESA!';
+                            defesas++;
                         } else {
-                            // Keeper mode
-                            if (chosenZone === keeperZone && Math.random() < currentDiff.saveChance) {
-                                resultado = 'DEFESA!';
-                                defesas++;
-                            } else {
-                                resultado = 'GOL DO ADVERSARIO!';
-                            }
+                            resultado = 'GOOOL!';
+                            gols++;
                         }
                         resultTimer = 0;
                         state = cobradas >= totalCobradas ? 'gameover' : 'result';
@@ -640,12 +515,11 @@
                     px(0, 0, W, H, 'rgba(0,0,0,0.75)');
 
                     let rating, ratingColor;
-                    const score = gameMode === 'striker' ? gols : defesas;
-                    if (score === 5) { rating = 'CRAQUE!'; ratingColor = '#fbbf24'; }
-                    else if (score === 4) { rating = 'Muito bom!'; ratingColor = '#86efac'; }
-                    else if (score === 3) { rating = 'Bom!'; ratingColor = '#34d399'; }
-                    else if (score === 2) { rating = 'Precisa treinar...'; ratingColor = '#fbbf24'; }
-                    else if (score === 1) { rating = 'Perna de pau!'; ratingColor = '#fca5a5'; }
+                    if (gols === 5) { rating = 'CRAQUE!'; ratingColor = '#fbbf24'; }
+                    else if (gols === 4) { rating = 'Muito bom!'; ratingColor = '#86efac'; }
+                    else if (gols === 3) { rating = 'Bom!'; ratingColor = '#34d399'; }
+                    else if (gols === 2) { rating = 'Precisa treinar...'; ratingColor = '#fbbf24'; }
+                    else if (gols === 1) { rating = 'Perna de pau!'; ratingColor = '#fca5a5'; }
                     else { rating = 'Caneleiro!'; ratingColor = '#ef4444'; }
 
                     ctx.fillStyle = '#34d399';
@@ -655,7 +529,7 @@
 
                     ctx.fillStyle = '#fbbf24';
                     ctx.font = "bold 28px 'JetBrains Mono', monospace";
-                    ctx.fillText(`${score} / ${totalCobradas}`, W / 2, H / 2 + 8);
+                    ctx.fillText(`${gols} / ${totalCobradas}`, W / 2, H / 2 + 8);
 
                     ctx.fillStyle = ratingColor;
                     ctx.font = "bold 14px 'Russo One', sans-serif";
@@ -701,15 +575,9 @@
                 const scoreEl = document.getElementById('penaltyScore');
                 if (scoreEl) {
                     const atual = cobradas + (state === 'aiming' ? 1 : 0);
-                    if (gameMode === 'striker') {
-                        scoreEl.textContent = state === 'gameover'
-                            ? `${gols} de ${totalCobradas} gols`
-                            : `Gols: ${gols} | Cobranca ${atual} de ${totalCobradas}`;
-                    } else {
-                        scoreEl.textContent = state === 'gameover'
-                            ? `${defesas} defesas em ${totalCobradas} penaltis`
-                            : `Defesas: ${defesas} | Penalti ${atual} de ${totalCobradas}`;
-                    }
+                    scoreEl.textContent = state === 'gameover'
+                        ? `${gols} de ${totalCobradas} gols`
+                        : `Gols: ${gols} | Cobranca ${atual} de ${totalCobradas}`;
                 }
 
                 this._penaltyAnimFrame = requestAnimationFrame(loop);

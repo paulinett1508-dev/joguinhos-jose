@@ -1,5 +1,5 @@
 // =====================================================================
-// reptil.js — Jogo Reptil Standalone v1.0
+// reptil.js — Jogo Reptil Standalone v1.1
 // =====================================================================
 // Inspirado em Reptile Interactive Cursor (MIT License)
 // Reescrito com: IIFE, IK esqueletica, visual rico, touch, cleanup
@@ -18,7 +18,7 @@
         GLOW: 'rgba(0,255,136,0.5)',
         EYE: '#0f172a',
         EYE_GLOW: '#00ff88',
-        HEAD_R: 5,
+        HEAD_R: 3,
         LINE_W: 2.2,
     };
 
@@ -316,9 +316,9 @@
 
         var spinal = critter;
 
-        // Pescoco (6 segmentos com costelas)
-        for (var i = 0; i < 6; i++) {
-            spinal = new Segment(spinal, s * 4, 0, Math.PI * 2 / 3, 1.1);
+        // Pescoco (4 segmentos com costelas - mais rigido)
+        for (var i = 0; i < 4; i++) {
+            spinal = new Segment(spinal, s * 4, 0, Math.PI / 4, 2.5);
             for (var side = -1; side <= 1; side += 2) {
                 var node = new Segment(spinal, s * 3, side, 0.1, 2);
                 for (var k = 0; k < 3; k++) {
@@ -330,9 +330,9 @@
         // Torso + pernas
         for (var i = 0; i < legCount; i++) {
             if (i > 0) {
-                // Vertebras entre pernas
-                for (var ii = 0; ii < 6; ii++) {
-                    spinal = new Segment(spinal, s * 4, 0, Math.PI / 2, 1.5);
+                // Vertebras entre pernas (menos e mais rigidas)
+                for (var ii = 0; ii < 4; ii++) {
+                    spinal = new Segment(spinal, s * 4, 0, Math.PI / 4, 2.5);
                     for (var side = -1; side <= 1; side += 2) {
                         var node = new Segment(spinal, s * 3, side * Math.PI / 2, 0.1, 1.5);
                         for (var k = 0; k < 3; k++) {
@@ -357,9 +357,9 @@
             }
         }
 
-        // Cauda
+        // Cauda (mais rigida para nao enrolar)
         for (var i = 0; i < tailLen; i++) {
-            spinal = new Segment(spinal, s * 4, 0, Math.PI * 2 / 3, 1.1);
+            spinal = new Segment(spinal, s * 4, 0, Math.PI / 5, 3);
             for (var side = -1; side <= 1; side += 2) {
                 var node = new Segment(spinal, s * 3, side, 0.1, 2);
                 for (var k = 0; k < 3; k++) {
@@ -391,10 +391,10 @@
             self.mouseX = W / 2;
             self.mouseY = H / 2;
 
-            // Gerar lagarto aleatorio
-            var legCount = 2 + Math.floor(Math.random() * 4); // 2-5 pares
-            var sizeScale = 6 / Math.sqrt(legCount);
-            var tailLen = 6 + Math.floor(Math.random() * legCount * 4);
+            // Gerar lagarto aleatorio (menor para nao se enrolar em telas mobile)
+            var legCount = 2 + Math.floor(Math.random() * 3); // 2-4 pares
+            var sizeScale = 3 / Math.sqrt(legCount);
+            var tailLen = 4 + Math.floor(Math.random() * legCount * 2);
             self.critter = buildLizard(W / 2, H / 2, sizeScale, legCount, tailLen);
 
             // Overlay
