@@ -14,7 +14,7 @@
     var _low = function () { return _P().low; };
 
     // ---- Configuracao ----
-    var CONF = {
+    var CONF_LACRAIA = {
         BG:           '#050a14',
         GRID:         '#0a1420',
         BODY_STROKE:  '#f97316',
@@ -26,11 +26,29 @@
         ANT:          '#fbbf24',
         HEAD_R:       11,
         LINE_W:       1.8,
-        // compat
         STROKE:       '#f97316',
         STROKE_DIM:   'rgba(249,115,22,0.4)',
         EYE_GLOW:     '#ff3333',
     };
+
+    var CONF_LAGARTO = {
+        BG:           '#050a14',
+        GRID:         '#0a1628',
+        BODY_STROKE:  '#00ff88',
+        BODY_FILL:    '#050a14',
+        BODY_FILL2:   '#0a1628',
+        LEG_STROKE:   'rgba(0,255,136,0.6)',
+        GLOW:         'rgba(0,255,136,0.5)',
+        EYE:          '#0f172a',
+        ANT:          '#00ff88',
+        HEAD_R:       4,
+        LINE_W:       2.2,
+        STROKE:       '#00ff88',
+        STROKE_DIM:   'rgba(0,255,136,0.35)',
+        EYE_GLOW:     '#00ff88',
+    };
+
+    var CONF = CONF_LACRAIA; // ativo, trocado em abrir()
 
     // ---- Classes de IK ----
 
@@ -330,6 +348,39 @@
     Creature.prototype.draw = function (ctx, iter) {
         var angle = this.absAngle;
         var r = CONF.HEAD_R;
+
+        // Lagarto: cabeca triangular original
+        if (this.isLizard) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, r,
+                Math.PI / 4 + angle, 7 * Math.PI / 4 + angle);
+            ctx.moveTo(
+                this.x + r * Math.cos(7 * Math.PI / 4 + angle),
+                this.y + r * Math.sin(7 * Math.PI / 4 + angle));
+            ctx.lineTo(
+                this.x + r * Math.cos(angle) * Math.SQRT2,
+                this.y + r * Math.sin(angle) * Math.SQRT2);
+            ctx.lineTo(
+                this.x + r * Math.cos(Math.PI / 4 + angle),
+                this.y + r * Math.sin(Math.PI / 4 + angle));
+            ctx.stroke();
+            for (var side = -1; side <= 1; side += 2) {
+                var eyeAngle = angle + side * 0.6;
+                var ex = this.x + r * 0.7 * Math.cos(eyeAngle);
+                var ey = this.y + r * 0.7 * Math.sin(eyeAngle);
+                ctx.beginPath();
+                ctx.arc(ex, ey, 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = CONF.EYE_GLOW;
+                ctx.fill();
+            }
+            if (iter) {
+                for (var i = 0; i < this.children.length; i++) {
+                    this.children[i].draw(ctx, true);
+                }
+            }
+            return;
+        }
+
         var t = Date.now() * 0.0018;
 
         // Antenas (bezier animadas)
@@ -542,6 +593,7 @@
             }
         }
 
+        critter.isLizard = true;
         return critter;
     }
 
@@ -631,16 +683,26 @@
         _onKey: null,
         _onResize: null,
 
-        abrir: function () {
+        abrir: function (tipo) {
             var self = this;
             var W = window.innerWidth;
             var H = window.innerHeight;
 
             self.mouseX = W / 2;
             self.mouseY = H / 2;
+            self._tipo = tipo || 'lacraia';
 
-            // Gerar lacraia
-            self.critter = buildCentipede(W / 2, H / 2);
+            // Trocar config de cores e gerar criatura
+            if (self._tipo === 'lagarto') {
+                CONF = CONF_LAGARTO;
+                var legCount = _low() ? 2 : 2 + Math.floor(Math.random() * 2);
+                var sizeScale = 4 / Math.sqrt(legCount);
+                var tailLen = _low() ? 8 : 10 + Math.floor(Math.random() * 6);
+                self.critter = buildLizard(W / 2, H / 2, sizeScale, legCount, tailLen);
+            } else {
+                CONF = CONF_LACRAIA;
+                self.critter = buildCentipede(W / 2, H / 2);
+            }
 
             // Inicializar som
             self.som = new SomReptil();
@@ -713,7 +775,7 @@
                 'transition:opacity 1.5s',
                 'user-select:none',
             ].join(';');
-            label.textContent = 'Mova para guiar a lacraia  |  ESC para sair';
+            label.textContent = (self._tipo === 'lagarto' ? 'Mova para guiar o lagarto' : 'Mova para guiar a lacraia') + '  |  ESC para sair';
 
             overlay.appendChild(canvas);
             overlay.appendChild(closeBtn);
@@ -819,29 +881,31 @@
 
             ctx.lineCap = 'round';
 
-            // Passe 1: pernas (abaixo do corpo)
-            ctx.strokeStyle = CONF.LEG_STROKE;
-            ctx.lineWidth = 1.3;
-            if (!_low()) {
-                ctx.shadowColor = 'rgba(194,65,12,0.3)';
-                ctx.shadowBlur = 3;
+            if (this._tipo === 'lagarto') {
+                // Render original: linha unica verde neon
+                ctx.strokeStyle = CONF.STROKE;
+                ctx.lineWidth = CONF.LINE_W;
+                if (!_low()) { ctx.shadowColor = CONF.GLOW; ctx.shadowBlur = 6; }
+                this.critter.draw(ctx, true);
+                ctx.shadowBlur = 0;
+            } else {
+                // Passe 1: pernas (abaixo do corpo)
+                ctx.strokeStyle = CONF.LEG_STROKE;
+                ctx.lineWidth = 1.3;
+                if (!_low()) { ctx.shadowColor = 'rgba(194,65,12,0.3)'; ctx.shadowBlur = 3; }
+                this.critter.drawLegs(ctx);
+                ctx.shadowBlur = 0;
+
+                // Passe 2: corpo (acima das pernas)
+                ctx.strokeStyle = CONF.BODY_STROKE;
+                ctx.lineWidth = CONF.LINE_W;
+                if (!_low()) { ctx.shadowColor = CONF.GLOW; ctx.shadowBlur = 10; }
+                this.critter.drawBody(ctx);
+
+                // Cabeca + antenas (sem recursao nos filhos)
+                this.critter.draw(ctx, false);
+                ctx.shadowBlur = 0;
             }
-            this.critter.drawLegs(ctx);
-            ctx.shadowBlur = 0;
-
-            // Passe 2: corpo (acima das pernas)
-            ctx.strokeStyle = CONF.BODY_STROKE;
-            ctx.lineWidth = CONF.LINE_W;
-            if (!_low()) {
-                ctx.shadowColor = CONF.GLOW;
-                ctx.shadowBlur = 10;
-            }
-            this.critter.drawBody(ctx);
-
-            // Cabeca + antenas (sem recursao nos filhos)
-            this.critter.draw(ctx, false);
-
-            ctx.shadowBlur = 0;
 
             // Cursor visivel
             var mx = this.mouseX, my = this.mouseY;

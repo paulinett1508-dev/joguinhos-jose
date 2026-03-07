@@ -43,12 +43,24 @@
             }
         },
         {
-            id: 'reptil',
-            nome: 'Reptil',
+            id: 'lagarto',
+            nome: 'Lagarto',
             icon: 'gesture',
             cor: 'linear-gradient(135deg,#10b981,#047857)',
             abrir: function () {
-                if (window.ReptilGame) window.ReptilGame.abrir();
+                if (window.ReptilGame) window.ReptilGame.abrir('lagarto');
+            },
+            fechar: function () {
+                if (window.ReptilGame) window.ReptilGame.fechar();
+            }
+        },
+        {
+            id: 'lacraia',
+            nome: 'Lacraia',
+            icon: 'pest_control_rodent',
+            cor: 'linear-gradient(135deg,#f97316,#c2410c)',
+            abrir: function () {
+                if (window.ReptilGame) window.ReptilGame.abrir('lacraia');
             },
             fechar: function () {
                 if (window.ReptilGame) window.ReptilGame.fechar();
@@ -209,7 +221,7 @@
         jogoAtual = jogo;
         mostrarTela('tela-jogo');
         // Jogos com overlay proprio (fullscreen) escondem a tela-jogo
-        if (jogo.id === 'escorpiao' || jogo.id === 'reptil' || jogo.id === 'pacman' || jogo.id === 'tamandua') {
+        if (jogo.id === 'escorpiao' || jogo.id === 'lagarto' || jogo.id === 'lacraia' || jogo.id === 'pacman' || jogo.id === 'tamandua') {
             document.getElementById('tela-jogo').classList.add('hidden');
         }
         jogo.abrir();
