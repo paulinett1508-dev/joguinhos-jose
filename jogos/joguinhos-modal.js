@@ -85,10 +85,10 @@
             iconCanvas: true,
             cor: 'linear-gradient(135deg,#1a3a9e,#0ea5e9)',
             abrir: function () {
-                if (window.SonicGame) window.SonicGame.abrir();
+                if (window.MegadriveGame) window.MegadriveGame.abrir('roms/megadrive/sonic.md');
             },
             fechar: function () {
-                if (window.SonicGame) window.SonicGame.fechar();
+                if (window.MegadriveGame) window.MegadriveGame.fechar();
             }
         }
     ];
