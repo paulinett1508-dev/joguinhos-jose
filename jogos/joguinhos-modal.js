@@ -201,6 +201,8 @@
     function irParaHub() {
         pararSplashAnim();
         mostrarTela('tela-hub');
+        _telaAtual = 'hub';
+        history.pushState({ tela: 'hub' }, '');
     }
 
     function irParaSplash() {
@@ -212,6 +214,7 @@
         if (container) container.innerHTML = '';
         mostrarTela('tela-splash');
         iniciarSplashAnim();
+        _telaAtual = 'splash';
     }
 
     function irParaJogo(jogo) {
@@ -222,6 +225,8 @@
             document.getElementById('tela-jogo').classList.add('hidden');
         }
         jogo.abrir();
+        _telaAtual = 'jogo';
+        history.pushState({ tela: 'jogo', jogoId: jogo.id }, '');
     }
 
     function voltarDoJogo() {
@@ -479,7 +484,170 @@
         frame();
     }
 
-    // ---- Splash: Desenhar rosto do Jose (estilo referencia) ----
+    // ---- Desenho do Jose reutilizavel (splash + dialogo) ----
+
+    function _desenharRostoJose(ctx, W, H, t) {
+        var cx = W / 2;
+        var cy = H / 2 + W * 0.055;
+        var bounce = Math.sin(t * 0.04) * W * 0.008;
+        var scale = W / 180; // escala relativa ao canvas original de 180px
+
+        var skin = '#f5dfc5';
+        var skinDark = '#e8c9a8';
+        var hairColor = '#1a3f7a';
+        var hairLight = '#2d5fa8';
+        var hairDark = '#0f2a55';
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(Math.sin(t * 0.02) * 0.02);
+        ctx.translate(-cx, -cy);
+
+        // Orelhas
+        ctx.fillStyle = skin;
+        ctx.beginPath();
+        ctx.ellipse(cx - 52 * scale, cy + 5 * scale + bounce, 12 * scale, 16 * scale, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + 52 * scale, cy + 5 * scale + bounce, 12 * scale, 16 * scale, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rosto sombra
+        ctx.fillStyle = skinDark;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 6 * scale + bounce, 52 * scale, 48 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Rosto principal
+        ctx.fillStyle = skin;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + bounce, 50 * scale, 46 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cabelo base
+        ctx.fillStyle = hairDark;
+        ctx.beginPath();
+        ctx.arc(cx, cy - 10 * scale + bounce, 55 * scale, Math.PI, 0);
+        ctx.fill();
+
+        // Cachinhos
+        var curls = [
+            { x: 0, y: -62, r: 18 },
+            { x: -22, y: -58, r: 17 }, { x: 22, y: -58, r: 17 },
+            { x: -42, y: -45, r: 16 }, { x: 42, y: -45, r: 16 },
+            { x: -10, y: -68, r: 14 }, { x: 10, y: -68, r: 14 },
+            { x: -32, y: -55, r: 15 }, { x: 32, y: -55, r: 15 },
+            { x: -50, y: -30, r: 14 }, { x: 50, y: -30, r: 14 },
+            { x: 0, y: -72, r: 12 },
+            { x: -55, y: -15, r: 12 }, { x: 55, y: -15, r: 12 }
+        ];
+        curls.forEach(function(c, i) {
+            var wobble = Math.sin(t * 0.02 + i * 0.4) * 1.5 * scale;
+            ctx.fillStyle = hairColor;
+            ctx.beginPath();
+            ctx.arc(cx + c.x * scale + wobble, cy + c.y * scale + bounce, c.r * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = hairLight;
+            ctx.beginPath();
+            ctx.arc(cx + c.x * scale + wobble - 4 * scale, cy + c.y * scale + bounce - 5 * scale, c.r * 0.3 * scale, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Olhos
+        var blink = (t % 200 < 8) ? 0.1 : 1;
+        var eyeY = cy + bounce;
+        var eyeSpacing = 22 * scale;
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(cx - eyeSpacing, eyeY, 14 * scale, 16 * scale * blink, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + eyeSpacing, eyeY, 14 * scale, 16 * scale * blink, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (blink > 0.5) {
+            ctx.fillStyle = '#3d2314';
+            ctx.beginPath();
+            ctx.ellipse(cx - eyeSpacing + 2 * scale, eyeY + 2 * scale, 9 * scale, 10 * scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(cx + eyeSpacing + 2 * scale, eyeY + 2 * scale, 9 * scale, 10 * scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1a0f0a';
+            ctx.beginPath();
+            ctx.arc(cx - eyeSpacing + 2 * scale, eyeY + 3 * scale, 5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx + eyeSpacing + 2 * scale, eyeY + 3 * scale, 5 * scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(cx - eyeSpacing + 5 * scale, eyeY - 2 * scale, 4 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx + eyeSpacing + 5 * scale, eyeY - 2 * scale, 4 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx - eyeSpacing - 1 * scale, eyeY + 5 * scale, 2 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx + eyeSpacing - 1 * scale, eyeY + 5 * scale, 2 * scale, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Sobrancelhas
+        ctx.strokeStyle = hairDark;
+        ctx.lineWidth = 2.5 * scale;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - 34 * scale, cy - 18 * scale + bounce);
+        ctx.quadraticCurveTo(cx - 22 * scale, cy - 24 * scale + bounce, cx - 10 * scale, cy - 20 * scale + bounce);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + 10 * scale, cy - 20 * scale + bounce);
+        ctx.quadraticCurveTo(cx + 22 * scale, cy - 24 * scale + bounce, cx + 34 * scale, cy - 18 * scale + bounce);
+        ctx.stroke();
+
+        // Nariz
+        ctx.fillStyle = skinDark;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 18 * scale + bounce, 4 * scale, 3 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bochechas
+        ctx.fillStyle = 'rgba(255, 160, 140, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(cx - 36 * scale, cy + 18 * scale + bounce, 12 * scale, 8 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + 36 * scale, cy + 18 * scale + bounce, 12 * scale, 8 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sorriso
+        ctx.fillStyle = '#c45c5c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 32 * scale + bounce, 18 * scale, 12 * scale, 0, 0, Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(cx, cy + 32 * scale + bounce, 14 * scale, 0.15, Math.PI - 0.15);
+        ctx.lineTo(cx - 13 * scale, cy + 32 * scale + bounce);
+        ctx.fill();
+
+        ctx.strokeStyle = '#803030';
+        ctx.lineWidth = 2.5 * scale;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, cy + 32 * scale + bounce, 16 * scale, 0.1, Math.PI - 0.1);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    // ---- Splash: Desenhar rosto do Jose (usa funcao reutilizavel) ----
 
     function desenharJose() {
         var canvas = document.getElementById('jose-canvas');
@@ -489,183 +657,10 @@
         var H = canvas.height;
         var t = 0;
 
-        // Paleta de cores
-        var skin = '#f5dfc5';
-        var skinDark = '#e8c9a8';
-        var hairColor = '#1a3f7a';
-        var hairLight = '#2d5fa8';
-        var hairDark = '#0f2a55';
-
         function frame() {
             t++;
             ctx.clearRect(0, 0, W, H);
-
-            var cx = W / 2;
-            var cy = H / 2 + 10;
-            var bounce = Math.sin(t * 0.04) * 1.5;
-
-            ctx.save();
-
-            // Leve rotacao divertida
-            ctx.translate(cx, cy);
-            ctx.rotate(Math.sin(t * 0.02) * 0.02);
-            ctx.translate(-cx, -cy);
-
-            // ===== ORELHAS =====
-            ctx.fillStyle = skin;
-            ctx.beginPath();
-            ctx.ellipse(cx - 52, cy + 5 + bounce, 12, 16, -0.2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(cx + 52, cy + 5 + bounce, 12, 16, 0.2, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ===== ROSTO =====
-            // Sombra sutil
-            ctx.fillStyle = skinDark;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 6 + bounce, 52, 48, 0, 0, Math.PI * 2);
-            ctx.fill();
-            // Rosto principal
-            ctx.fillStyle = skin;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + bounce, 50, 46, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ===== CABELO AZUL (mais volumoso) =====
-            // Base do cabelo
-            ctx.fillStyle = hairDark;
-            ctx.beginPath();
-            ctx.arc(cx, cy - 10 + bounce, 55, Math.PI, 0);
-            ctx.fill();
-
-            // Cachinhos maiores e mais organicos
-            var curls = [
-                { x: 0, y: -62, r: 18 },
-                { x: -22, y: -58, r: 17 }, { x: 22, y: -58, r: 17 },
-                { x: -42, y: -45, r: 16 }, { x: 42, y: -45, r: 16 },
-                { x: -10, y: -68, r: 14 }, { x: 10, y: -68, r: 14 },
-                { x: -32, y: -55, r: 15 }, { x: 32, y: -55, r: 15 },
-                { x: -50, y: -30, r: 14 }, { x: 50, y: -30, r: 14 },
-                { x: 0, y: -72, r: 12 },
-                { x: -55, y: -15, r: 12 }, { x: 55, y: -15, r: 12 }
-            ];
-
-            curls.forEach(function(c, i) {
-                var wobble = Math.sin(t * 0.02 + i * 0.4) * 1.5;
-                ctx.fillStyle = hairColor;
-                ctx.beginPath();
-                ctx.arc(cx + c.x + wobble, cy + c.y + bounce, c.r, 0, Math.PI * 2);
-                ctx.fill();
-                // Brilho no cabelo
-                ctx.fillStyle = hairLight;
-                ctx.beginPath();
-                ctx.arc(cx + c.x + wobble - 4, cy + c.y + bounce - 5, c.r * 0.3, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // ===== OLHOS GRANDES E EXPRESSIVOS =====
-            var blink = (t % 200 < 8) ? 0.1 : 1;
-            var eyeY = cy + bounce;
-            var eyeSpacing = 22;
-
-            // Branco dos olhos
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.ellipse(cx - eyeSpacing, eyeY, 14, 16 * blink, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(cx + eyeSpacing, eyeY, 14, 16 * blink, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Iris (marrom escuro)
-            if (blink > 0.5) {
-                ctx.fillStyle = '#3d2314';
-                ctx.beginPath();
-                ctx.ellipse(cx - eyeSpacing + 2, eyeY + 2, 9, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.ellipse(cx + eyeSpacing + 2, eyeY + 2, 9, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupila
-                ctx.fillStyle = '#1a0f0a';
-                ctx.beginPath();
-                ctx.arc(cx - eyeSpacing + 2, eyeY + 3, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(cx + eyeSpacing + 2, eyeY + 3, 5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Brilhos grandes
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(cx - eyeSpacing + 5, eyeY - 2, 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(cx + eyeSpacing + 5, eyeY - 2, 4, 0, Math.PI * 2);
-                ctx.fill();
-                // Brilhos pequenos
-                ctx.beginPath();
-                ctx.arc(cx - eyeSpacing - 1, eyeY + 5, 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(cx + eyeSpacing - 1, eyeY + 5, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // ===== SOBRANCELHAS SUAVES =====
-            ctx.strokeStyle = hairDark;
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(cx - 34, cy - 18 + bounce);
-            ctx.quadraticCurveTo(cx - 22, cy - 24 + bounce, cx - 10, cy - 20 + bounce);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(cx + 10, cy - 20 + bounce);
-            ctx.quadraticCurveTo(cx + 22, cy - 24 + bounce, cx + 34, cy - 18 + bounce);
-            ctx.stroke();
-
-            // ===== NARIZ PEQUENO =====
-            ctx.fillStyle = skinDark;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 18 + bounce, 4, 3, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ===== BOCHECHAS ROSADAS =====
-            ctx.fillStyle = 'rgba(255, 160, 140, 0.35)';
-            ctx.beginPath();
-            ctx.ellipse(cx - 36, cy + 18 + bounce, 12, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(cx + 36, cy + 18 + bounce, 12, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // ===== SORRISO FELIZ =====
-            // Boca aberta
-            ctx.fillStyle = '#c45c5c';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + 32 + bounce, 18, 12, 0, 0, Math.PI);
-            ctx.fill();
-
-            // Dentes superiores
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(cx, cy + 32 + bounce, 14, 0.15, Math.PI - 0.15);
-            ctx.lineTo(cx - 13, cy + 32 + bounce);
-            ctx.fill();
-
-            // Contorno do sorriso
-            ctx.strokeStyle = '#803030';
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.arc(cx, cy + 32 + bounce, 16, 0.1, Math.PI - 0.1);
-            ctx.stroke();
-
-            ctx.restore();
-
+            _desenharRostoJose(ctx, W, H, t);
             joseAnimFrame = requestAnimationFrame(frame);
         }
         frame();
@@ -887,9 +882,279 @@
         pararMusicaSplash();
     }
 
+    // ---- Dialogo de confirmacao com Jose ----
+
+    var _confirmacaoOv = null;
+    var _confirmacaoRAF = null;
+    var _telaAtual = 'splash'; // rastreia tela ativa para popstate
+
+    function _fecharConfirmacao() {
+        if (_confirmacaoRAF) { cancelAnimationFrame(_confirmacaoRAF); _confirmacaoRAF = null; }
+        if (_confirmacaoOv) { _confirmacaoOv.remove(); _confirmacaoOv = null; }
+        var s = document.getElementById('jose-confirm-styles');
+        if (s) s.remove();
+    }
+
+    /**
+     * Mostra dialogo de confirmacao com o mascote Jose.
+     * @param {Object} opcoes
+     * @param {string} opcoes.texto - Texto no balao (ex: "Sair?", "Tchau?")
+     * @param {string} opcoes.btnFicarTexto - Texto do botao ficar
+     * @param {string} opcoes.btnFicarIcon - Material icon do botao ficar
+     * @param {string} opcoes.btnSairTexto - Texto do botao sair
+     * @param {string} opcoes.btnSairIcon - Material icon do botao sair
+     * @param {Function} opcoes.onSair - Callback ao confirmar saida
+     * @param {Function} [opcoes.onFicar] - Callback ao cancelar (opcional)
+     */
+    function mostrarConfirmacaoJose(opcoes) {
+        if (_confirmacaoOv) return; // ja aberto
+
+        // Overlay
+        var ov = document.createElement('div');
+        ov.id = 'jose-confirm-ov';
+        ov.style.cssText = [
+            'position:fixed', 'inset:0', 'z-index:10000',
+            'background:rgba(15,23,42,0.92)',
+            'display:flex', 'flex-direction:column',
+            'align-items:center', 'justify-content:center',
+            '-webkit-tap-highlight-color:transparent',
+            'opacity:0', 'transition:opacity 0.25s ease-out',
+        ].join(';');
+        _confirmacaoOv = ov;
+
+        // Card central
+        var card = document.createElement('div');
+        card.style.cssText = [
+            'position:relative',
+            'background:#1e293b',
+            'border-radius:32px',
+            'padding:24px 28px 28px',
+            'display:flex', 'flex-direction:column', 'align-items:center',
+            'gap:12px',
+            'box-shadow:0 0 0 3px rgba(139,92,246,0.4), 0 20px 60px rgba(0,0,0,0.6)',
+            'transform:scale(0.8)', 'transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+            'max-width:min(320px, 88vw)',
+            'width:100%',
+        ].join(';');
+
+        // Canvas do Jose (mini)
+        var joseCV = document.createElement('canvas');
+        joseCV.width = 120;
+        joseCV.height = 120;
+        joseCV.style.cssText = 'display:block;width:120px;height:120px;margin:0 auto;';
+        card.appendChild(joseCV);
+
+        // Balao de fala
+        var balao = document.createElement('div');
+        balao.style.cssText = [
+            'position:relative',
+            'background:linear-gradient(135deg,#8b5cf6,#6d28d9)',
+            'color:#fff',
+            'font-family:"Russo One",sans-serif',
+            'font-size:clamp(1.4rem,6vw,2rem)',
+            'padding:14px 32px',
+            'border-radius:22px',
+            'text-align:center',
+            'box-shadow:0 4px 20px rgba(139,92,246,0.4)',
+            'margin-top:4px',
+        ].join(';');
+        balao.textContent = opcoes.texto || 'Sair?';
+
+        // Setinha do balao (triangulo apontando pra cima)
+        var seta = document.createElement('div');
+        seta.style.cssText = [
+            'position:absolute', 'top:-10px', 'left:50%', 'transform:translateX(-50%)',
+            'width:0', 'height:0',
+            'border-left:12px solid transparent',
+            'border-right:12px solid transparent',
+            'border-bottom:12px solid #8b5cf6',
+        ].join(';');
+        balao.appendChild(seta);
+        card.appendChild(balao);
+
+        // Container dos botoes
+        var btns = document.createElement('div');
+        btns.style.cssText = [
+            'display:flex', 'gap:16px', 'margin-top:8px', 'width:100%',
+            'justify-content:center',
+        ].join(';');
+
+        // Botao FICAR (verde, proeminente)
+        var btnFicar = document.createElement('button');
+        btnFicar.style.cssText = [
+            'flex:1', 'min-height:72px',
+            'background:linear-gradient(135deg,#10b981,#059669)',
+            'border:none', 'border-radius:20px',
+            'color:#fff', 'cursor:pointer',
+            'font-family:"Russo One",sans-serif',
+            'font-size:clamp(1rem,4vw,1.3rem)',
+            'display:flex', 'align-items:center', 'justify-content:center', 'gap:8px',
+            'box-shadow:0 4px 20px rgba(16,185,129,0.4)',
+            '-webkit-tap-highlight-color:transparent',
+            'transition:transform 0.12s',
+        ].join(';');
+        btnFicar.innerHTML = '<span class="material-icons" style="font-size:28px;">' +
+            (opcoes.btnFicarIcon || 'favorite') + '</span>' +
+            (opcoes.btnFicarTexto || 'Ficar!');
+        btnFicar.addEventListener('click', function () {
+            _fecharConfirmacao();
+            if (opcoes.onFicar) opcoes.onFicar();
+        });
+
+        // Botao SAIR (sutil)
+        var btnSair = document.createElement('button');
+        btnSair.style.cssText = [
+            'flex:1', 'min-height:72px',
+            'background:rgba(100,116,139,0.25)',
+            'border:2px solid #475569', 'border-radius:20px',
+            'color:#94a3b8', 'cursor:pointer',
+            'font-family:"Russo One",sans-serif',
+            'font-size:clamp(0.9rem,3.5vw,1.1rem)',
+            'display:flex', 'align-items:center', 'justify-content:center', 'gap:8px',
+            '-webkit-tap-highlight-color:transparent',
+            'transition:transform 0.12s',
+        ].join(';');
+        btnSair.innerHTML = '<span class="material-icons" style="font-size:24px;">' +
+            (opcoes.btnSairIcon || 'exit_to_app') + '</span>' +
+            (opcoes.btnSairTexto || 'Sair');
+        btnSair.addEventListener('click', function () {
+            _fecharConfirmacao();
+            if (opcoes.onSair) opcoes.onSair();
+        });
+
+        btns.appendChild(btnFicar);
+        btns.appendChild(btnSair);
+        card.appendChild(btns);
+        ov.appendChild(card);
+
+        // Keyframes
+        var style = document.createElement('style');
+        style.id = 'jose-confirm-styles';
+        style.textContent = '@keyframes jc-pulse{0%,100%{box-shadow:0 0 0 3px rgba(139,92,246,0.4),0 20px 60px rgba(0,0,0,0.6)}50%{box-shadow:0 0 0 5px rgba(139,92,246,0.6),0 20px 60px rgba(0,0,0,0.6)}}';
+        document.head.appendChild(style);
+
+        document.body.appendChild(ov);
+
+        // Animar Jose no canvas mini
+        var joseCtx = joseCV.getContext('2d');
+        var jt = 0;
+        function joseFrame() {
+            if (!joseCV.isConnected) return;
+            jt++;
+            joseCtx.clearRect(0, 0, 120, 120);
+            _desenharRostoJose(joseCtx, 120, 120, jt);
+            _confirmacaoRAF = requestAnimationFrame(joseFrame);
+        }
+        joseFrame();
+
+        // Animacao de entrada (fade in + scale)
+        requestAnimationFrame(function () {
+            ov.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+            card.style.animation = 'jc-pulse 2s ease-in-out infinite';
+        });
+
+        // Som de "pop" curto
+        try {
+            var ac = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ac.createOscillator();
+            var g = ac.createGain();
+            osc.connect(g); g.connect(ac.destination);
+            osc.type = 'sine'; osc.frequency.value = 600;
+            var now = ac.currentTime;
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(0.08, now + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            osc.frequency.linearRampToValueAtTime(900, now + 0.08);
+            osc.start(now); osc.stop(now + 0.15);
+            setTimeout(function () { ac.close().catch(function () {}); }, 300);
+        } catch (e) { /* audio nao disponivel */ }
+    }
+
+    // ---- History API & popstate ----
+
+    function _telaAtualDetectar() {
+        // Detecta tela visivel baseado no DOM
+        if (jogoAtual) return 'jogo';
+        var hub = document.getElementById('tela-hub');
+        if (hub && !hub.classList.contains('hidden')) return 'hub';
+        return 'splash';
+    }
+
+    function _popstateHandler(e) {
+        // Se ja tem dialogo aberto, ignora
+        if (_confirmacaoOv) {
+            // Re-empilha estado para nao perder
+            history.pushState({ tela: _telaAtual }, '');
+            return;
+        }
+
+        var tela = _telaAtualDetectar();
+
+        if (tela === 'jogo') {
+            // Re-empilha estado para manter na pilha
+            history.pushState({ tela: 'jogo' }, '');
+            mostrarConfirmacaoJose({
+                texto: 'Sair?',
+                btnFicarTexto: 'Jogar!',
+                btnFicarIcon: 'sports_esports',
+                btnSairTexto: 'Sair',
+                btnSairIcon: 'exit_to_app',
+                onSair: function () {
+                    voltarDoJogo();
+                    // Substitui o estado atual por hub (voltarDoJogo nao empilha)
+                    history.replaceState({ tela: 'hub' }, '');
+                    _telaAtual = 'hub';
+                },
+            });
+        } else if (tela === 'hub') {
+            history.pushState({ tela: 'hub' }, '');
+            mostrarConfirmacaoJose({
+                texto: 'Tchau?',
+                btnFicarTexto: 'Ficar!',
+                btnFicarIcon: 'favorite',
+                btnSairTexto: 'Sair',
+                btnSairIcon: 'exit_to_app',
+                onSair: function () {
+                    irParaSplash();
+                    history.replaceState({ tela: 'splash' }, '');
+                    _telaAtual = 'splash';
+                },
+            });
+        } else {
+            // Splash — perguntar se quer sair do app
+            history.pushState({ tela: 'splash' }, '');
+            mostrarConfirmacaoJose({
+                texto: 'Tchau?',
+                btnFicarTexto: 'Ficar!',
+                btnFicarIcon: 'favorite',
+                btnSairTexto: 'Sair',
+                btnSairIcon: 'exit_to_app',
+                onSair: function () {
+                    // Sair de verdade: remove o estado extra e faz back real
+                    _ignorarProximoPopstate = true;
+                    history.back();
+                },
+            });
+        }
+    }
+
+    var _ignorarProximoPopstate = false;
+    window.addEventListener('popstate', function (e) {
+        if (_ignorarProximoPopstate) {
+            _ignorarProximoPopstate = false;
+            return;
+        }
+        _popstateHandler(e);
+    });
+
     // ---- Inicializacao ----
 
     function init() {
+        // Estado inicial do History API
+        history.replaceState({ tela: 'splash' }, '');
+        _telaAtual = 'splash';
+
         // Montar hub
         montarHub();
 
