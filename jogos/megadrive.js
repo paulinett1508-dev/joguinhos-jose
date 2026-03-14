@@ -9,8 +9,8 @@
 // Solucao: cada abertura cria um <iframe srcdoc> com escopo JS isolado.
 // Fechar o overlay remove o iframe e destroi o escopo completamente.
 //
-// Botao sair: canto inferior esquerdo, chama history.back() para passar
-// pelo dialogo "Sair?" do hub (popstate handler em joguinhos-modal.js).
+// Botao Sair: centralizado no gap preto entre canvas e gamepad virtual.
+// Chama history.back() → dialogo "Sair?" do hub (popstate em joguinhos-modal.js).
 // =====================================================================
 
 (function () {
@@ -46,27 +46,30 @@
         // Gamepad API requer permissao explicita em iframes
         iframe.setAttribute('allow', 'autoplay; gamepad *');
 
+        // Todos os botoes false: a barra de menu sera ocultada via CSS de qualquer forma.
+        // exitEmulation false evita que EJS adicione seu proprio botao de saida.
         var ejsButtons = JSON.stringify({
-            playPause:    false,
-            restart:      true,
-            mute:         true,
-            settings:     false,
-            fullscreen:   false,
-            saveState:    false,
-            loadState:    false,
-            screenRecord: false,
-            gamepad:      false,
-            cheat:        false,
-            volume:       false,
-            zoom:         false,
-            diskDrive:    false,
-            netplay:      false,
-            saveSavFiles: false,
-            loadSavFiles: false,
-            quickSave:    false,
-            quickLoad:    false,
-            screenshot:   false,
-            cacheManager: false,
+            playPause:      false,
+            restart:        false,
+            mute:           false,
+            settings:       false,
+            fullscreen:     false,
+            saveState:      false,
+            loadState:      false,
+            screenRecord:   false,
+            gamepad:        false,
+            cheat:          false,
+            volume:         false,
+            zoom:           false,
+            diskDrive:      false,
+            netplay:        false,
+            saveSavFiles:   false,
+            loadSavFiles:   false,
+            quickSave:      false,
+            quickLoad:      false,
+            screenshot:     false,
+            cacheManager:   false,
+            exitEmulation:  false,
         });
 
         iframe.srcdoc = [
@@ -75,6 +78,12 @@
             '*{margin:0;padding:0;box-sizing:border-box}',
             'body{background:#000;width:100vw;height:100vh;overflow:hidden}',
             '#ejs-game{width:100%;height:100%}',
+            // Esconde toda a barra de menu do EJS (toolbar topo + "Rapido/Lento" rodape)
+            '.ejs_menu_bar{display:none!important}',
+            // Centraliza o canvas verticalmente entre o topo e o gamepad (~45vh livre acima)
+            // Mega Drive: aspecto 320:224 → altura do canvas = 70vw em portrait
+            // Posicionar canvas no centro do espaco acima do gamepad virtual
+            '.ejs_canvas{object-position:center calc(50vh - 35vw)!important}',
             '</style></head><body>',
             '<div id="ejs-game"></div>',
             '<script>',
@@ -93,33 +102,40 @@
 
         _overlay.appendChild(iframe);
 
-        // --- Botao sair: canto inferior esquerdo, acima do controle virtual ---
-        // history.back() dispara popstate → dialogo "Sair?" do hub
+        // --- Botao Sair ---
+        // Posicionado no gap preto (logo abaixo do canvas do jogo, centralizado).
+        // Mega Drive 320:224 → altura do canvas = 100vw * 224/320 = 70vw.
+        // Botao fica a top: calc(70vw + 20px), fora da area do gamepad virtual.
+        // history.back() → popstate → dialogo "Sair?" do hub.
         var exitBtn = document.createElement('button');
         exitBtn.setAttribute('aria-label', 'Sair do jogo');
         exitBtn.innerHTML =
-            '<span class="material-icons" style="font-size:18px;pointer-events:none;">arrow_back</span>' +
-            '<span style="font-family:Inter,sans-serif;font-size:0.7rem;pointer-events:none;margin-left:4px;">Sair</span>';
+            '<span class="material-icons" style="font-size:20px;pointer-events:none;">arrow_back</span>' +
+            '<span style="pointer-events:none;margin-left:6px;">Sair</span>';
         Object.assign(exitBtn.style, {
             position:    'absolute',
-            bottom:      '12px',
-            left:        '12px',
+            top:         'calc(100vw * 0.7 + 20px)',
+            left:        '50%',
+            transform:   'translateX(-50%)',
             zIndex:      '9200',
             display:     'flex',
             alignItems:  'center',
-            padding:     '8px 14px',
-            background:  'rgba(0,0,0,0.60)',
-            border:      '1px solid rgba(255,255,255,0.20)',
-            color:       'rgba(255,255,255,0.75)',
-            borderRadius:'20px',
+            padding:     '10px 20px',
+            background:  'rgba(15,23,42,0.85)',
+            border:      '1px solid rgba(255,255,255,0.45)',
+            color:       '#fff',
+            borderRadius:'24px',
             cursor:      'pointer',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
-            minWidth:    '64px',
-            minHeight:   '36px',
+            minWidth:    '80px',
+            minHeight:   '44px',
+            fontSize:    '0.8rem',
+            fontFamily:  'Inter,sans-serif',
+            whiteSpace:  'nowrap',
         });
         exitBtn.addEventListener('click', function () {
-            history.back();
+            history.back(); // dispara popstate → dialogo "Sair?" do hub
         });
         _overlay.appendChild(exitBtn);
 
