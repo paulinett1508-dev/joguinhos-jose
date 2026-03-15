@@ -38,7 +38,7 @@
         {
             id:   '5200',
             nome: 'Atari 5200',
-            core: 'atari800',
+            core: 'a5200',
             icon: 'sports_esports',
             cor:  '#f59e0b',
             roms: [
